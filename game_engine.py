@@ -86,11 +86,11 @@ class GameEngine:
                 make_move(self.m_board, self.m_best_move, self.m_chess_type ^ 3)
                 if is_win_by_premove(self.m_board, self.m_best_move):
                     print("We lost!")
-                if self.search_a_move(self.m_chess_type, self.m_best_move):
-                    msg = f"move {move2msg(self.m_best_move)}"
-                    make_move(self.m_board, self.m_best_move, self.m_chess_type)
-                    print(msg)
-                    flush_output()
+                self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move)
+                msg = f"move {move2msg(self.m_best_move)}"
+                make_move(self.m_board, self.m_best_move, self.m_chess_type)
+                print(msg)
+                flush_output()
             elif msg.startswith("depth"):
                 d = int(msg[6:])
                 if 0 < d < 10:
@@ -107,13 +107,13 @@ class GameEngine:
 
         start = time.perf_counter()
         self.m_search_engine.before_search(self.m_board, self.m_chess_type, self.m_alphabeta_depth)
-        score = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove, bestMove)
+        move, score = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove)
         end = time.perf_counter()
 
         print(f"AB Time:\t{end - start:.3f}")
         print(f"Node:\t{self.m_search_engine.m_total_nodes}\n")
         print(f"Score:\t{score:.3f}")
-        return True
+        return move
 
 def flush_output():
     sys.stdout.flush()
