@@ -4,6 +4,7 @@ BLACK = 1                   # Black flag in the board.
 WHITE = 2                   # White flag in the board.
 BORDER = 3                  # Border flag in the board.
 NOSTONE = 0                 # Empty flag.
+HOT_SPOT = 4                # Interesting board position
 MSG_LENGTH = 512            #Tamaño del mensaje
 GRID_COUNT = 361            #Sum of the points in the board.
 LOG_FILE = "tia-engine.log"

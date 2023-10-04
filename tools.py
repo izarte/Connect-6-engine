@@ -12,9 +12,43 @@ def init_board(board):
         for j in range(1, GRID_NUM - 1):
             board[i][j] = NOSTONE
             
-def make_move(board, move, color):
+def make_move(board, hot_board: set, move, color):
     board[move.positions[0].x][move.positions[0].y] = color
     board[move.positions[1].x][move.positions[1].y] = color
+    update_hot_board(hot_board, board, move)
+
+def update_hot_board(hot_board: set, board, moves):
+    for move in moves.positions:
+        # Discard the stones if are already in hot_board
+        hot_board.discard((move.x, move.y))
+        for row in range(move.y + 2, move.y - 3):
+            for col in range(move.x + 2, move.x - 3):
+                # If current iteration is move, ignore
+                if row == move.y and col == move.x:
+                    continue
+                # If current position is outside board limits, ignore
+                if not check_limits(row, col):
+                    continue
+                if board[row][col] == NOSTONE and not (row, col) in hot_board:
+                    hot_board.add((row, col))
+    write_hot_board(hot_board)
+
+
+def write_hot_board(hot_board):
+    board = [ [0]*GRID_NUM for i in range(GRID_NUM)]
+    for position in hot_board:
+        board[position[1]][position[0]] = 1
+    with open("hot_board.txt", "w") as file:
+        for row in board:
+            file.write(' '.join(map(str, row)) + '\n')
+
+
+def check_limits(x, y):
+    if x < 1 or x > GRID_NUM - 1:
+        return False
+    if y < 1 or y > GRID_NUM - 1:
+        return False
+    return True
 
 def unmake_move(board, move):
     board[move.positions[0].x][move.positions[0].y] = NOSTONE
