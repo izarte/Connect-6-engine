@@ -17,6 +17,7 @@ class SearchEngine():
     
         best_move = StoneMove()
         #Check game result
+        best_move = StoneMove()
         if (is_win_by_premove(self.m_board, preMove)):
             if (our_colour == self.m_chess_type):
                 #Opponent wins.
@@ -53,14 +54,14 @@ class SearchEngine():
         
     def check_first_move(self):
         for i in range(1,len(self.m_board)-1):
-            for j in range(1, len(self.m_board[i])-1):
+            for j in range(1, len(self.m_board[i]) - 1):
                 if(self.m_board[i][j] != NOSTONE):
                     return False
         return True
         
     def find_possible_move(self):
         for i in range(1,len(self.m_board)-1):
-            for j in range(1, len(self.m_board[i])-1):
+            for j in range(1, len(self.m_board[i]) - 1):
                 if(self.m_board[i][j] == NOSTONE):
                     return (i,j)
         return (-1,-1)

@@ -3,7 +3,7 @@ import time
 
 # Point (x, y) if in the valid position of the board.
 def isValidPos(x,y):
-    return x>0 and x<GRID_NUM-1 and y>0 and y<GRID_NUM-1
+    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
     
 def init_board(board):
     for i in range(21):
@@ -29,18 +29,18 @@ def is_win_by_premove(board, preMove):
             position = preMove.positions[i]
             n = x = position.x
             m = y = position.y
-            movStone = board[n][m]
+            actual_move = board[n][m]
             
-            if (movStone == BORDER or movStone == NOSTONE):
+            if (actual_move == BORDER or actual_move == NOSTONE):
                 return False
                 
-            while board[x][y] == movStone:
+            while board[x][y] == actual_move:
                 x += direction[0]
                 y += direction[1]
                 count += 1
             x = n - direction[0]
             y = m - direction[1]
-            while board[x][y] == movStone:
+            while board[x][y] == actual_move:
                 x -= direction[0]
                 y -= direction[1]
                 count += 1
