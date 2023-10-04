@@ -47,7 +47,7 @@ class SearchEngine():
             move2 = self.find_possible_move()
             best_move.positions[1].x = move2[0]
             best_move.positions[1].y = move2[1]
-            make_move(self.m_board,best_move,ourColor)
+        make_move(self.m_board,best_move,ourColor)
 
         return best_move, alpha
         
