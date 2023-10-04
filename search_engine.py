@@ -33,22 +33,7 @@ class SearchEngine():
 
             return best_move, alpha
          
-        move1 = self.find_possible_move()
-        best_move.positions[0].x = move1[0]
-        best_move.positions[0].y = move1[1]
-        best_move.positions[1].x = move1[0]
-        best_move.positions[1].y = move1[1]
-        # make_move(self.m_board, best_move, our_colour)
-        
-        '''#Check game result
-        if (is_win_by_premove(self.m_board, best_move)):
-            #Self wins.
-            return MININT + 1;'''
-        
-        move2 = self.find_possible_move()
-        best_move.positions[1].x = move2[0]
-        best_move.positions[1].y = move2[1]
-        # make_move(self.m_board,best_move,our_colour)
+        best_move = self.find_possible_move()
 
         return best_move, alpha
         
@@ -60,11 +45,17 @@ class SearchEngine():
         return True
         
     def find_possible_move(self):
+        move = StoneMove()
+        found = 0
         for i in range(1,len(self.m_board)-1):
             for j in range(1, len(self.m_board[i]) - 1):
                 if(self.m_board[i][j] == NOSTONE):
-                    return (i,j)
-        return (-1,-1)
+                    move.positions[found].x = i
+                    move.positions[found].y = j
+                    found += 1
+                    if found == 2:
+                        return move
+        return move
 
 def flush_output():
     import sys

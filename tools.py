@@ -21,10 +21,10 @@ def update_hot_board(hot_board: set, board, moves):
     for move in moves.positions:
         # Discard the stones if are already in hot_board
         hot_board.discard((move.x, move.y))
-        for row in range(move.y + 2, move.y - 3):
-            for col in range(move.x + 2, move.x - 3):
+        for row in range(move.x - 2, move.x + 3):
+            for col in range(move.y - 2, move.y + 3):
                 # If current iteration is move, ignore
-                if row == move.y and col == move.x:
+                if row == move.x and col == move.y:
                     continue
                 # If current position is outside board limits, ignore
                 if not check_limits(row, col):
@@ -35,10 +35,14 @@ def update_hot_board(hot_board: set, board, moves):
 
 
 def write_hot_board(hot_board):
-    board = [ [0]*GRID_NUM for i in range(GRID_NUM)]
+    board = [ [0]*(GRID_NUM) for i in range(GRID_NUM)]
+    init_board(board)
     for position in hot_board:
-        board[position[1]][position[0]] = 1
+        board[position[1]][GRID_NUM - 1 -position[0]] = 'X'
     with open("hot_board.txt", "w") as file:
+        for tup in hot_board:
+            file.write(str(tup) + ' ')
+        file.write("\n")
         for row in board:
             file.write(' '.join(map(str, row)) + '\n')
 
