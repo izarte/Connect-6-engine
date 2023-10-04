@@ -6,7 +6,7 @@ def isValidPos(x,y):
     return x>0 and x<GRID_NUM-1 and y>0 and y<GRID_NUM-1
     
 def init_board(board):
-    for i in range(GRID_NUM):
+    for i in range(21):
         board[i][0] = board[0][i] = board[i][GRID_NUM - 1] = board[GRID_NUM - 1][i] = BORDER
     for i in range(1, GRID_NUM - 1):
         for j in range(1, GRID_NUM - 1):

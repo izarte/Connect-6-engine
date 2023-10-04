@@ -13,11 +13,12 @@ class SearchEngine():
         self.m_alphabeta_depth = alphabeta_depth
         self.m_total_nodes = 0
 
-    def alpha_beta_search(self, depth, alpha, beta, ourColor, bestMove, preMove):
+    def alpha_beta_search(self, depth, alpha, beta, our_colour, preMove):
     
+        best_move = StoneMove()
         #Check game result
         if (is_win_by_premove(self.m_board, preMove)):
-            if (ourColor == self.m_chess_type):
+            if (our_colour == self.m_chess_type):
                 #Opponent wins.
                 return 0
             else:
@@ -26,29 +27,29 @@ class SearchEngine():
         
         alpha = 0
         if(self.check_first_move()):
-            bestMove.positions[0].x = 10
-            bestMove.positions[0].y = 10
-            bestMove.positions[1].x = 10
-            bestMove.positions[1].y = 10
+            best_move.positions[0].x = 10
+            best_move.positions[0].y = 10
+            best_move.positions[1].x = 10
+            best_move.positions[1].y = 10
         else:   
             move1 = self.find_possible_move()
-            bestMove.positions[0].x = move1[0]
-            bestMove.positions[0].y = move1[1]
-            bestMove.positions[1].x = move1[0]
-            bestMove.positions[1].y = move1[1]
-            make_move(self.m_board,bestMove,ourColor)
+            best_move.positions[0].x = move1[0]
+            best_move.positions[0].y = move1[1]
+            best_move.positions[1].x = move1[0]
+            best_move.positions[1].y = move1[1]
+            make_move(self.m_board,best_move,our_colour)
             
             '''#Check game result
-            if (is_win_by_premove(self.m_board, bestMove)):
+            if (is_win_by_premove(self.m_board, best_move)):
                 #Self wins.
                 return MININT + 1;'''
             
             move2 = self.find_possible_move()
-            bestMove.positions[1].x = move2[0]
-            bestMove.positions[1].y = move2[1]
-            make_move(self.m_board,bestMove,ourColor)
+            best_move.positions[1].x = move2[0]
+            best_move.positions[1].y = move2[1]
+            make_move(self.m_board,best_move,our_colour)
 
-        return alpha
+        return best_move, alpha
         
     def check_first_move(self):
         for i in range(1,len(self.m_board)-1):
