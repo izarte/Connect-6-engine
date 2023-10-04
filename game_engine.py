@@ -62,6 +62,7 @@ class GameEngine:
                 self.m_best_move = msg2move(msg[6:])
                 make_move(self.m_board, self.m_best_move, WHITE)
                 self.m_chess_type = WHITE
+            # THIS IS EXECUTED BY INTERFACE
             elif msg == "next":
                 # XOR operator to change player turn
                 self.m_chess_type = self.m_chess_type ^ 3
