@@ -11,6 +11,7 @@ ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
+DEPTH = 3
 
 class StonePosition:
     def __init__(self,x,y):
@@ -18,8 +19,18 @@ class StonePosition:
         self.y = y
 
 class StoneMove:
-    def __init__(self):
-        self.positions = [StonePosition(0,0),StonePosition(0,0)]
+    # Move equals None to make it unecessary but if present fill values
+    # Move if not none will be a tuple of 2 tuples as ((x1, y1), (x2, y2))
+    def __init__(self, move = None):
+        first_move = StonePosition(0, 0)
+        second_move = StonePosition(0, 0)
+        if move:
+            first_move.x = move[0][0]
+            first_move.y = move[0][1]
+            second_move.x = move[1][0]
+            second_move.y = move[1][1]
+
+        self.positions = [first_move, second_move]
         self.score = 0
 
 # One point and its value.
