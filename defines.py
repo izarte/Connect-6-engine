@@ -11,7 +11,7 @@ ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 3
+DEPTH = 1
 
 class StonePosition:
     def __init__(self,x,y):

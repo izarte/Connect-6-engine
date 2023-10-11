@@ -1,7 +1,6 @@
 from tools import *
-# from tree import TreeNode
+from tree import TreeNode
 
-import copy
 
 class SearchEngine():
     def __init__(self):
@@ -36,18 +35,19 @@ class SearchEngine():
 
             return best_move, alpha
         
-        # tree = TreeNode(
-        #     created_move = None,
-        #     level = 0,
-        #     selection_method = 1,
-        #     board = copy.deepcopy(self.board),
-        #     hot_board = copy.deepcopy(self.hot_board),
-        #     color = our_colour
-        #     )
+        tree = TreeNode(
+            created_move = None,
+            level = 0,
+            slelection_method_is_max = 1,
+            board = self.board,
+            hot_board = self.hot_board,
+            color = our_colour,
+            total_nodes = 0
+            )
         
-        # best_move = tree.expand_tree()
-        best_move = self.find_possible_move()
-        return best_move, alpha
+        best_move, nodes = tree.expand_tree()
+        # best_move = self.find_possible_move()
+        return best_move, nodes
         
     def check_first_move(self):
         for i in range(1,len(self.board)-1):
