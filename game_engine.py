@@ -42,12 +42,9 @@ class GameEngine:
     def run(self):
         msg = ""
         self.on_help()
-        prev_msgs = []
+
         while True:
             msg = input().strip()
-            if msg in prev_msgs:
-                continue
-            prev_msgs.append(msg)
             log_to_file(msg)
             if msg == "name":
                 print(f"name {self.m_engine_name}")

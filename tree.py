@@ -1,8 +1,9 @@
 from defines import *
 from calculation_module import CalculationModule
-from tools import make_move, unmake_move
+from tools import make_move, unmake_move, my_print
 
 import itertools
+import time
 
 
 class TreeNode:
@@ -18,7 +19,9 @@ class TreeNode:
         self.is_leaf = True if self.level == DEPTH else False
         self.total_nodes = total_nodes
 
-
+    """
+        Calculates all possible moves and expand tree for each posibility until depth is reached
+    """
     def expand_tree(self):
         posible_combinations = list(itertools.combinations(self.hot_board, 2))
         # Next children are leafs if next depth level is DEPTH
@@ -41,12 +44,12 @@ class TreeNode:
                 total_nodes = self.total_nodes
             )
             score, self.total_nodes = node.expand_tree()
+            # Unmake move to return original state (at this point all childs have been explored)
+            unmake_move(self.board, self.hot_board, move)
             # Only save movements for first node
             self.posible_moves[score] = None
             if self.level == 0:
                 self.posible_moves[score] = move
-            # Unmake move to return original state (at this point all childs have been explored)
-            unmake_move(self.board, self.hot_board, move)
         best_option = self.get_selection()
         # Return the best move if it is first node
         if self.level == 0:
