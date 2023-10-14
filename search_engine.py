@@ -35,6 +35,8 @@ class SearchEngine():
 
             return best_move, alpha
         
+        alpha_beta = AlphaBeta()
+
         tree = TreeNode(
             created_move = None,
             level = 0,
@@ -42,7 +44,8 @@ class SearchEngine():
             board = self.board,
             hot_board = self.hot_board,
             color = our_colour,
-            total_nodes = 0
+            total_nodes = 0,
+            parent_alpha_beta = alpha_beta
             )
         
         best_move, nodes = tree.expand_tree()

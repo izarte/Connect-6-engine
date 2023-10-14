@@ -50,3 +50,15 @@ class Chess:
         self.x = x
         self.y = y
         self.score = score
+
+
+class AlphaBeta:
+    def __init__(self, alpha = MININT, beta = MAXINT):
+        self.alpha = alpha
+        self.beta = beta
+    
+    """
+        Returns True if alpha is greater than beta, so stop expanding
+    """
+    def __bool__(self):
+        return self.alpha > self.beta
