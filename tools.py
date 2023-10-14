@@ -2,7 +2,7 @@ from defines import *
 import time
 
 # Point (x, y) if in the valid position of the board.
-def isValidPos(x,y):
+def is_valid_pose(x,y):
     return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
     
 def init_board(board):
@@ -12,26 +12,58 @@ def init_board(board):
         for j in range(1, GRID_NUM - 1):
             board[i][j] = NOSTONE
             
-def make_move(board, hot_board: set, move, color):
+def make_move(board, hot_board: dict, move, color):
     board[move.positions[0].x][move.positions[0].y] = color
     board[move.positions[1].x][move.positions[1].y] = color
-    update_hot_board(hot_board, board, move)
+    update_hot_board(hot_board, board, move, make=True)
 
-def update_hot_board(hot_board: set, board, moves):
+
+def unmake_move(board, hot_board, move):
+    board[move.positions[0].x][move.positions[0].y] = NOSTONE
+    board[move.positions[1].x][move.positions[1].y] = NOSTONE
+    update_hot_board(hot_board, board, move, make=False)
+
+
+"""
+    make = True if is maken move, False if is unmaken
+"""
+def update_hot_board(hot_board: dict, board, moves: StoneMove, make: bool):
     for move in moves.positions:
-        # Discard the stones if are already in hot_board
-        hot_board.discard((move.x, move.y))
-        for row in range(move.x - 2, move.x + 3):
-            for col in range(move.y - 2, move.y + 3):
+        # If make action and position is in hot_board, delete it
+        if make and (move.x, move.y) in hot_board:
+            del hot_board[(move.x, move.y)]
+        # Go through all the neighbors
+        for row in range(move.x - HOT_IMPACT, move.x + HOT_IMPACT + 1):
+            for col in range(move.y - HOT_IMPACT, move.y + HOT_IMPACT + 1):
                 # If current iteration is move, ignore
-                if row == move.x and col == move.y:
+                if make and row == move.x and col == move.y:
                     continue
                 # If current position is outside board limits, ignore
-                if not check_limits(row, col):
+                if not is_valid_pose(row, col):
                     continue
-                if board[row][col] == NOSTONE and not (row, col) in hot_board:
-                    hot_board.add((row, col))
-    write_hot_board(hot_board)
+                if board[row][col] != NOSTONE: # If there's already a stone in the main board, ignore
+                    continue
+                target = StonePosition(row, col)
+                impact = StonePosition(move.x, move.y)
+                # Unmake action. Unmaken move should be hot
+                if not make:
+                    target = StonePosition(move.x, move.y)
+                    impact = StonePosition(row, col)
+                    if (row, col) in hot_board:
+                        if (move.x, move.y) in hot_board[(row, col)]:
+                            # my_print(f"DELETED {row}, {col} by {move}", "log.txt")
+                            hot_board[(row, col)].remove((move.x, move.y))
+                        if not hot_board[(row, col)]:
+                            del hot_board[(row, col)]
+                if not (target.x, target.y) in hot_board: # If the hot position is not already created, create hot position
+                    # my_print(f"CREATED {target} by {impact}", "log.txt")
+                    hot_board[(target.x, target.y)] = [(impact.x, impact.y)]
+                    continue
+                if not (impact.x, impact.y) in hot_board[(target.x, target.y)]:# If it already exists, append actual position to store impact in the same hot position
+                    hot_board[(target.x, target.y)].append((impact.x, impact.y))
+                    # my_print(f"ADD {target} by {impact}", "log.txt")
+
+    # write_hot_board(hot_board)
 
 
 def write_hot_board(hot_board):
@@ -40,23 +72,15 @@ def write_hot_board(hot_board):
     for position in hot_board:
         board[position[1]][GRID_NUM - 1 -position[0]] = 'X'
     with open("hot_board.txt", "w") as file:
-        for tup in hot_board:
-            file.write(str(tup) + ' ')
-        file.write("\n")
         for row in board:
             file.write(' '.join(map(str, row)) + '\n')
+        for move in hot_board:
+            file.write(str(move)+':')
+            for m in hot_board[move]:
+                file.write(' ' + str(m))
+            file.write("\n")
+        file.write("\n")
 
-
-def check_limits(x, y):
-    if x < 1 or x > GRID_NUM - 1:
-        return False
-    if y < 1 or y > GRID_NUM - 1:
-        return False
-    return True
-
-def unmake_move(board, move):
-    board[move.positions[0].x][move.positions[0].y] = NOSTONE
-    board[move.positions[1].x][move.positions[1].y] = NOSTONE
 
 def is_win_by_premove(board, preMove):
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
@@ -160,3 +184,12 @@ def print_score(move_list, n):
             else:
                 print(f"{score:4}", end="")
         print()
+
+
+def my_print(msg, name):
+    with open(name, 'a+') as f:
+        tm = time.time()
+        ptr = time.ctime(tm)
+        ptr = ptr[:-1]
+        f.write(f"[{ptr}] - {msg}\n")
+    f.close()
