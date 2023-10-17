@@ -74,14 +74,14 @@ class TreeNode:
             return self.posible_moves[best_option], self.total_nodes
         
         # Update parent alpha beta values
-        # If is max and parent beta is greater than actual score
+        # If is max and parent beta is greater than the best actual score
         if self.slelection_method_is_max:
-            if score < self.parent_alpha_beta.beta:
-                self.parent_alpha_beta.beta = score
-        # If is min and parent alpha is smaller than actual score
+            if best_option < self.parent_alpha_beta.beta:
+                self.parent_alpha_beta.beta = best_option
+        # If is min and parent alpha is smaller than best actual score
         else:
-            if score > self.parent_alpha_beta.alpha:
-                self.parent_alpha_beta.alpha = score
+            if best_option > self.parent_alpha_beta.alpha:
+                self.parent_alpha_beta.alpha = best_option
 
         # Return the best value if it is a leaf or an intermediate level
         return best_option, self.total_nodes
