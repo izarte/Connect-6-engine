@@ -117,6 +117,7 @@ class GameEngine:
         print(f"AB Time:\t{end - start:.3f}")
         print(f"Node:\t{self.m_search_engine.total_nodes}\n")
         print(f"Score:\t{score:.3f}")
+
         return bestMove
 
 def flush_output():

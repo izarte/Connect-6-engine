@@ -4,6 +4,7 @@ from tools import make_move, unmake_move, my_print
 
 import itertools
 
+
 class TreeNode:
     def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, color, total_nodes, parent_alpha_beta):
         self.created_move = created_move
@@ -46,7 +47,7 @@ class TreeNode:
                 hot_board = self.hot_board,
                 color = self.color ^ 3,
                 total_nodes = self.total_nodes,
-                parent_alpha_beta = self.alpha_beta
+                parent_alpha_beta = self.alpha_beta,
             )
             score, self.total_nodes = node.expand_tree()
             # Unmake move to return original state (at this point all childs have been explored)
@@ -63,7 +64,7 @@ class TreeNode:
                 self.alpha_beta.alpha = score
             else:
             # If is min turn
-                if score < self.alpha_beta.beta:
+                if score > self.alpha_beta.beta:
                     continue
                 self.alpha_beta.beta = score
             
@@ -73,12 +74,14 @@ class TreeNode:
             return self.posible_moves[best_option], self.total_nodes
         
         # Update parent alpha beta values
-        # Current alpha -> parent beta
-        if self.alpha_beta.alpha < self.parent_alpha_beta.beta:
-            self.parent_alpha_beta.beta = self.alpha_beta.alpha
-        # Current beta -> parent alpha
-        if self.alpha_beta.beta < self.parent_alpha_beta.alpha:
-            self.parent_alpha_beta.alpha = self.alpha_beta.beta
+        # If is max and parent beta is greater than actual score
+        if self.slelection_method_is_max:
+            if score < self.parent_alpha_beta.beta:
+                self.parent_alpha_beta.beta = score
+        # If is min and parent alpha is smaller than actual score
+        else:
+            if score > self.parent_alpha_beta.alpha:
+                self.parent_alpha_beta.alpha = score
 
         # Return the best value if it is a leaf or an intermediate level
         return best_option, self.total_nodes

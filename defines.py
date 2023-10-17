@@ -11,7 +11,7 @@ ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 2
+DEPTH = 3
 
 HOT_IMPACT = 1
 
@@ -61,4 +61,4 @@ class AlphaBeta:
         Returns True if alpha is greater than beta, so stop expanding
     """
     def __bool__(self):
-        return self.alpha > self.beta
+        return self.alpha >= self.beta
