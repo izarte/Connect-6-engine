@@ -28,8 +28,8 @@ class TreeNode:
         posible_combinations = list(itertools.combinations(self.hot_board, 2))
         for combination in posible_combinations:
             # Check min-max condition to stop expanding
-            if self.alpha_beta:
-                break
+            # if self.alpha_beta:
+            #     break
             self.total_nodes += 1
             # Check if actual node is a leaf
             if self.is_leaf:
@@ -57,31 +57,30 @@ class TreeNode:
             if self.level == 0:
                 self.posible_moves[score] = move
             
-            if self.slelection_method_is_max:
-            # If is max turn
-                if score < self.alpha_beta.alpha:
-                    continue
-                self.alpha_beta.alpha = score
-            else:
-            # If is min turn
-                if score > self.alpha_beta.beta:
-                    continue
-                self.alpha_beta.beta = score
+            # if self.slelection_method_is_max:
+            # # If is max turn
+            #     if score < self.alpha_beta.alpha:
+            #         continue
+            #     self.alpha_beta.alpha = score
+            # else:
+            # # If is min turn
+            #     if score > self.alpha_beta.beta:
+            #         continue
+            #     self.alpha_beta.beta = score
             
         best_option = self.get_selection()
         # Return the best move if it is first node
         if self.level == 0:
-            return self.posible_moves[best_option], self.total_nodes
+            return self.posible_moves[best_option], best_option, self.total_nodes
         
         # Update parent alpha beta values
-        # If is max and parent beta is greater than the best actual score
-        if self.slelection_method_is_max:
-            if best_option < self.parent_alpha_beta.beta:
-                self.parent_alpha_beta.beta = best_option
-        # If is min and parent alpha is smaller than best actual score
-        else:
-            if best_option > self.parent_alpha_beta.alpha:
-                self.parent_alpha_beta.alpha = best_option
+        # Current alpha -> parent beta
+        if self.alpha_beta.alpha < self.parent_alpha_beta.beta:
+            self.parent_alpha_beta.beta = self.alpha_beta.alpha
+        # Current beta -> parent alpha
+        if self.alpha_beta.beta < self.parent_alpha_beta.alpha:
+            self.parent_alpha_beta.alpha = self.alpha_beta.beta
+
 
         # Return the best value if it is a leaf or an intermediate level
         return best_option, self.total_nodes

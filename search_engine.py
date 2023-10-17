@@ -33,7 +33,7 @@ class SearchEngine():
             best_move.positions[1].x = 10
             best_move.positions[1].y = 10
 
-            return best_move, alpha
+            return best_move, alpha, 1
         
         alpha_beta = AlphaBeta()
 
@@ -48,9 +48,9 @@ class SearchEngine():
             parent_alpha_beta = alpha_beta
             )
         
-        best_move, nodes = tree.expand_tree()
+        best_move, score, nodes = tree.expand_tree()
         # best_move = self.find_possible_move()
-        return best_move, nodes
+        return best_move, score, nodes
         
     def check_first_move(self):
         for i in range(1,len(self.board)-1):
