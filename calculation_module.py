@@ -1,5 +1,6 @@
 import random
+import sys
 
 class CalculationModule():
     def calculate():
-        return random.randint(-100, 100) 
+       return random.randint(-sys.maxsize, sys.maxsize)

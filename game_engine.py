@@ -111,12 +111,14 @@ class GameEngine:
         start = time.perf_counter()
         
         self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.m_chess_type, self.m_alphabeta_depth)
-        bestMove, score = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove)
+        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove)
         end = time.perf_counter()
 
+        my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
         print(f"AB Time:\t{end - start:.3f}")
         print(f"Node:\t{self.m_search_engine.total_nodes}\n")
         print(f"Score:\t{score:.3f}")
+
         return bestMove
 
 def flush_output():

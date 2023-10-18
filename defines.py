@@ -11,7 +11,7 @@ ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 2
+DEPTH = 3
 
 HOT_IMPACT = 1
 
@@ -50,3 +50,15 @@ class Chess:
         self.x = x
         self.y = y
         self.score = score
+
+
+class AlphaBeta:
+    def __init__(self, alpha = MININT, beta = MAXINT):
+        self.alpha = alpha
+        self.beta = beta
+    
+    """
+        Returns True if alpha is greater than beta, so stop expanding
+    """
+    def __bool__(self):
+        return self.alpha >= self.beta
