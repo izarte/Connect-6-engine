@@ -24,17 +24,18 @@ class TreeNode:
     """
         Calculates all possible moves and expand tree for each posibility until depth is reached
     """
-    def expand_tree(self):
+    def expand_tree(self, last_level = 0):
         posible_combinations = list(itertools.combinations(self.hot_board, 2))
+        # Check if actual node is a leaf
+        if self.is_leaf:
+            self.posible_moves[CalculationModule.calculate()] = None
+            posible_combinations = [] # Don't execute loop
+
         for combination in posible_combinations:
             # Check min-max condition to stop expanding
-            # if self.alpha_beta:
-            #     break
+            if self.alpha_beta:
+                break
             self.total_nodes += 1
-            # Check if actual node is a leaf
-            if self.is_leaf:
-                self.posible_moves[CalculationModule.calculate()] = None
-                continue
             move = StoneMove(combination)
             # Make move to change actual state
             make_move(self.board, self.hot_board, move, self.color)
@@ -49,7 +50,8 @@ class TreeNode:
                 total_nodes = self.total_nodes,
                 parent_alpha_beta = self.alpha_beta,
             )
-            score, self.total_nodes = node.expand_tree()
+
+            score, self.total_nodes = node.expand_tree(last_level)
             # Unmake move to return original state (at this point all childs have been explored)
             unmake_move(self.board, self.hot_board, move)
             # Only save movements for first node
@@ -57,30 +59,27 @@ class TreeNode:
             if self.level == 0:
                 self.posible_moves[score] = move
             
-            # if self.slelection_method_is_max:
-            # # If is max turn
-            #     if score < self.alpha_beta.alpha:
-            #         continue
-            #     self.alpha_beta.alpha = score
-            # else:
-            # # If is min turn
-            #     if score > self.alpha_beta.beta:
-            #         continue
-            #     self.alpha_beta.beta = score
+            # If is max turn
+                if score < self.alpha_beta.alpha:
+                    continue
+                self.alpha_beta.alpha = score
+            else:
+            # If is min turn
+                if score > self.alpha_beta.beta:
+                    continue
+                self.alpha_beta.beta = score
             
         best_option = self.get_selection()
         # Return the best move if it is first node
         if self.level == 0:
             return self.posible_moves[best_option], best_option, self.total_nodes
-        
         # Update parent alpha beta values
-        # Current alpha -> parent beta
-        if self.alpha_beta.alpha < self.parent_alpha_beta.beta:
-            self.parent_alpha_beta.beta = self.alpha_beta.alpha
-        # Current beta -> parent alpha
-        if self.alpha_beta.beta < self.parent_alpha_beta.alpha:
-            self.parent_alpha_beta.alpha = self.alpha_beta.beta
-
+        if self.slelection_method_is_max:
+            if best_option < self.parent_alpha_beta.beta:
+                self.parent_alpha_beta.beta = best_option
+        else:
+            if best_option > self.parent_alpha_beta.alpha:
+                self.parent_alpha_beta.alpha = best_option
 
         # Return the best value if it is a leaf or an intermediate level
         return best_option, self.total_nodes
@@ -95,5 +94,5 @@ class TreeNode:
     """
     def get_selection(self):
         if self.slelection_method_is_max:
-            return sorted(self.posible_moves)[-1]
-        return sorted(self.posible_moves)[0]
+            return max(self.posible_moves)
+        return min(self.posible_moves)

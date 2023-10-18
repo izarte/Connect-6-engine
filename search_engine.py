@@ -40,7 +40,7 @@ class SearchEngine():
         tree = TreeNode(
             created_move = None,
             level = 0,
-            slelection_method_is_max = 1,
+            slelection_method_is_max = True,
             board = self.board,
             hot_board = self.hot_board,
             color = our_colour,

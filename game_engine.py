@@ -114,7 +114,7 @@ class GameEngine:
         bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove)
         end = time.perf_counter()
 
-        my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.log")
+        my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
         print(f"AB Time:\t{end - start:.3f}")
         print(f"Node:\t{self.m_search_engine.total_nodes}\n")
         print(f"Score:\t{score:.3f}")
