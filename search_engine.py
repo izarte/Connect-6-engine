@@ -9,12 +9,13 @@ class SearchEngine():
         self.alphabeta_depth = None
         self.total_nodes = 0
 
-    def update_parameters(self, board, hot_board, color, alphabeta_depth):
+    def update_parameters(self, board, hot_board, color, alphabeta_depth, edges):
         self.board = board
         self.hot_board = hot_board
         self.chess_type = color
         self.alphabeta_depth = alphabeta_depth
         self.total_nodes = 0
+        self.edges = edges
 
     def alpha_beta_search(self, depth, alpha, beta, our_colour, preMove):
     
@@ -44,8 +45,10 @@ class SearchEngine():
             board = self.board,
             hot_board = self.hot_board,
             color = our_colour,
+            my_color = our_colour,
             total_nodes = 0,
-            parent_alpha_beta = alpha_beta
+            parent_alpha_beta = alpha_beta,
+            edges = self.edges
             )
         
         best_move, score, nodes = tree.expand_tree()

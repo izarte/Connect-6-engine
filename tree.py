@@ -1,17 +1,18 @@
 from defines import *
-from calculation_module import CalculationModule
+from calculation_module import CalculationModule, evaluate_board
 from tools import make_move, unmake_move, my_print
 
 import itertools
 
 
 class TreeNode:
-    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, color, total_nodes, parent_alpha_beta):
+    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, color, my_color, total_nodes, parent_alpha_beta, edges):
         self.created_move = created_move
         self.slelection_method_is_max = slelection_method_is_max
         self.board = board
         self.hot_board = hot_board
         self.color = color
+        self.my_color = my_color
         # Dictonary with labels as score and keys as move that creates scored scenario
         self.posible_moves = {}
         self.level = level
@@ -19,6 +20,7 @@ class TreeNode:
         self.total_nodes = total_nodes
         self.parent_alpha_beta = parent_alpha_beta
         self.alpha_beta = AlphaBeta(parent_alpha_beta.alpha, parent_alpha_beta.beta)
+        self.edges = edges
 
 
     """
@@ -29,6 +31,7 @@ class TreeNode:
         # Check if actual node is a leaf
         if self.is_leaf:
             self.posible_moves[CalculationModule.calculate()] = None
+            # self.posible_moves[evaluate_board(self.board, self.my_color, self.edges)] = None
             posible_combinations = [] # Don't execute loop
 
         for combination in posible_combinations:
@@ -38,7 +41,7 @@ class TreeNode:
             self.total_nodes += 1
             move = StoneMove(combination)
             # Make move to change actual state
-            make_move(self.board, self.hot_board, move, self.color)
+            make_move(self.board, self.hot_board, move, self.color, self.edges)
             # Create child
             node = TreeNode(
                 created_move = move,
@@ -47,13 +50,15 @@ class TreeNode:
                 board = self.board,
                 hot_board = self.hot_board,
                 color = self.color ^ 3,
+                my_color = self.my_color,
                 total_nodes = self.total_nodes,
                 parent_alpha_beta = self.alpha_beta,
+                edges = self.edges
             )
 
             score, self.total_nodes = node.expand_tree(last_level)
             # Unmake move to return original state (at this point all childs have been explored)
-            unmake_move(self.board, self.hot_board, move)
+            unmake_move(self.board, self.hot_board, move, self.edges)
             # Only save movements for first node
             self.posible_moves[score] = None
             if self.level == 0:

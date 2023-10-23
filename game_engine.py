@@ -4,6 +4,9 @@ import sys
 from search_engine import SearchEngine
 import time
 
+from calculation_module import evaluate_board
+
+
 class GameEngine:
     def __init__(self, name=ENGINE_NAME):
         if name and len(name) > 0:
@@ -17,6 +20,7 @@ class GameEngine:
         self.init_game()
         self.m_search_engine = SearchEngine()
         self.m_best_move = StoneMove()
+        self.edges = Edges()
 
     def init_game(self):
         init_board(self.m_board)
@@ -58,26 +62,28 @@ class GameEngine:
                 self.m_vcf = False
             elif msg.startswith("black"):
                 self.m_best_move = msg2move(msg[6:])
-                make_move(self.m_board, self.hot_board, self.m_best_move, BLACK)
+                make_move(self.m_board, self.hot_board, self.m_best_move, BLACK, self.edges)
                 self.m_chess_type = BLACK
             elif msg.startswith("white"):
                 self.m_best_move = msg2move(msg[6:])
-                make_move(self.m_board, self.hot_board, self.m_best_move, WHITE)
+                make_move(self.m_board, self.hot_board, self.m_best_move, WHITE, self.edges)
                 self.m_chess_type = WHITE
             # THIS IS EXECUTED BY INTERFACE (very true)
             elif msg == "next":
                 # XOR operator to change player turn
                 self.m_chess_type = self.m_chess_type ^ 3
-                self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move)
-                make_move(self.m_board, self.hot_board, self.m_best_move, self.m_chess_type)
+                self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move, self.edges)
+                make_move(self.m_board, self.hot_board, self.m_best_move, self.m_chess_type, self.edges)
                 msg = f"move {move2msg(self.m_best_move)}"
                 print(msg)
                 flush_output()
+                score = evaluate_board(board=self.m_board, my_color=self.m_chess_type, edges=self.edges)
+                my_print(f"Score: {score}", "score.log")
             elif msg.startswith("new"):
                 self.init_game()
                 if msg[4:] == "black":
                     self.m_best_move = msg2move("JJ")
-                    make_move(self.m_board, self.hot_board, self.m_best_move, BLACK)
+                    make_move(self.m_board, self.hot_board, self.m_best_move, BLACK, self.edges)
                     self.m_chess_type = BLACK
                     msg = "move JJ"
                     print(msg)
@@ -103,14 +109,14 @@ class GameEngine:
                 self.on_help()
         return 0
 
-    def search_a_move(self, ourColor, bestMove):
+    def search_a_move(self, ourColor, bestMove, edges):
         score = 0
         start = 0
         end = 0
 
         start = time.perf_counter()
         
-        self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.m_chess_type, self.m_alphabeta_depth)
+        self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.m_chess_type, self.m_alphabeta_depth, edges)
         bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove)
         end = time.perf_counter()
 

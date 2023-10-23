@@ -1,17 +1,19 @@
+from collections import deque
+
 GRID_NUM = 21               # Number of the board, 19*19 plus edges.
 GRID_COUNT = 361            # Sum of the points in the board.
 BLACK = 1                   # Black flag in the board.
 WHITE = 2                   # White flag in the board.
 BORDER = 3                  # Border flag in the board.
 NOSTONE = 0                 # Empty flag.
-MSG_LENGTH = 512            #Tamaño del mensaje
-GRID_COUNT = 361            #Sum of the points in the board.
+MSG_LENGTH = 512            # Tamaño del mensaje
+GRID_COUNT = 361            # Sum of the points in the board.
 LOG_FILE = "tia-engine.log"
 ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 3
+DEPTH = 6
 
 HOT_IMPACT = 1
 
@@ -62,3 +64,55 @@ class AlphaBeta:
     """
     def __bool__(self):
         return self.alpha >= self.beta
+
+
+class Edges():
+    def __init__(self):
+        self.min_i = 1
+        self.max_i = GRID_NUM - 1
+        self.min_j = 1
+        self.max_j = GRID_NUM - 1
+    
+
+    """
+        Return True if movement is out of edges
+    """
+    def check(self, x1, y1, x2, y2):
+        if (
+            self.min_i < x1 and 
+            self.min_i < x2 and
+            self.max_i > x1 and
+            self.max_i > x2 and
+            self.min_i < y1 and
+            self.min_i < y2 and
+            self.max_i > y1 and
+            self.max_i > y2
+        ):
+            return False
+        return True
+    
+    def update(self, x1, y1, x2, y2):
+        if x1 < self.min_i:
+            self.min_i = x1
+        elif x1 > self.max_i:
+            self.max_i = x1
+        if x2 < self.min_i:
+            self.min_i = x2
+        elif x2 > self.max_i:
+            self.max_i = x2
+        
+        if y1 < self.min_j:
+            self.min_j = y1
+        elif y1 > self.max_j:
+            self.max_j = y1
+        if y2 < self.min_j:
+            self.min_j = y2
+        elif y2 > self.max_j:
+            self.max_j = y2
+
+
+class Margin():
+    def __init__(self):
+        self.edges = Edges()
+        self.stack = deque()
+        self.stack.append(self.edges)

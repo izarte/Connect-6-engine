@@ -12,16 +12,37 @@ def init_board(board):
         for j in range(1, GRID_NUM - 1):
             board[i][j] = NOSTONE
             
-def make_move(board, hot_board: dict, move, color):
+def make_move(board, hot_board: dict, move, color, edges):
+    edges.update(move.positions[0].x, move.positions[0].y, move.positions[1].x, move.positions[1].y)
     board[move.positions[0].x][move.positions[0].y] = color
     board[move.positions[1].x][move.positions[1].y] = color
     update_hot_board(hot_board, board, move, make=True)
 
 
-def unmake_move(board, hot_board, move):
+def unmake_move(board, hot_board, move, edges):
+    if edges.check(move.positions[0].x, move.positions[0].y, move.positions[1].x, move.positions[1].y):
+        update_edges(edges, board)
     board[move.positions[0].x][move.positions[0].y] = NOSTONE
     board[move.positions[1].x][move.positions[1].y] = NOSTONE
     update_hot_board(hot_board, board, move, make=False)
+
+
+def update_edges(edges, board):
+    for i in range(1, GRID_NUM - 1):
+        # Horizontal edge
+        if BLACK in board[i] or WHITE in board[i]:
+            if i < edges.min_i:
+                edges.min_i = i
+            if i > edges.max_i:
+                edges.max_i = i
+
+        # Vertical edge
+        column_values = [board[j][i] for j in range(1, GRID_NUM - 1)]
+        if BLACK in column_values or WHITE in column_values:
+            if i < edges.min_i:
+                edges.min_i = i
+            if i > edges.max_i:
+                edges.max_i = i
 
 
 """
@@ -150,6 +171,26 @@ def msg2move(msg):
         move.positions[1].y = ord(msg[2]) - ord('A') + 1
         move.score = 0
         return move
+
+
+def write_board_to_file(filename, board, preMove=None):
+    with open(filename, 'w') as file:
+        file.write("   " + "".join([chr(i + ord('A') - 1) + " " for i in range(1, GRID_NUM - 1)]) + "\n")
+        for i in range(1, GRID_NUM - 1):
+            file.write(f"{chr(ord('A') - 1 + i)} ")
+            for j in range(1, GRID_NUM - 1):
+                x = GRID_NUM - 1 - j
+                y = i
+                stone = board[x][y]
+                if stone == NOSTONE:
+                    file.write(" -")
+                elif stone == BLACK:
+                    file.write(" O")
+                elif stone == WHITE:
+                    file.write(" *")
+            file.write(" " + f"{chr(ord('A') - 1 + i)}\n")
+        file.write("   " + "".join([chr(i + ord('A') - 1) + " " for i in range(1, GRID_NUM - 1)]) + "\n")
+
 
 def print_board(board, preMove=None):
     print("   " + "".join([chr(i + ord('A') - 1)+" " for i in range(1, GRID_NUM - 1)]))
