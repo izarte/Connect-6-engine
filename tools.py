@@ -12,37 +12,16 @@ def init_board(board):
         for j in range(1, GRID_NUM - 1):
             board[i][j] = NOSTONE
             
-def make_move(board, hot_board: dict, move, color, edges):
-    edges.update(move.positions[0].x, move.positions[0].y, move.positions[1].x, move.positions[1].y)
+def make_move(board, hot_board: dict, move, color):
     board[move.positions[0].x][move.positions[0].y] = color
     board[move.positions[1].x][move.positions[1].y] = color
     update_hot_board(hot_board, board, move, make=True)
 
 
-def unmake_move(board, hot_board, move, edges):
-    if edges.check(move.positions[0].x, move.positions[0].y, move.positions[1].x, move.positions[1].y):
-        update_edges(edges, board)
+def unmake_move(board, hot_board, move):
     board[move.positions[0].x][move.positions[0].y] = NOSTONE
     board[move.positions[1].x][move.positions[1].y] = NOSTONE
     update_hot_board(hot_board, board, move, make=False)
-
-
-def update_edges(edges, board):
-    for i in range(1, GRID_NUM - 1):
-        # Horizontal edge
-        if BLACK in board[i] or WHITE in board[i]:
-            if i < edges.min_i:
-                edges.min_i = i
-            if i > edges.max_i:
-                edges.max_i = i
-
-        # Vertical edge
-        column_values = [board[j][i] for j in range(1, GRID_NUM - 1)]
-        if BLACK in column_values or WHITE in column_values:
-            if i < edges.min_i:
-                edges.min_i = i
-            if i > edges.max_i:
-                edges.max_i = i
 
 
 """

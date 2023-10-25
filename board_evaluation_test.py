@@ -2,6 +2,8 @@ from defines import *
 from tools import *
 from calculation_module import evaluate_board
 
+import time
+
 board = [ [0]*GRID_NUM for i in range(GRID_NUM)]
 
 init_board(board)
@@ -16,6 +18,8 @@ board[4][5] = WHITE
 # board[10][9] = BLACK
 
 print_board(board)
-
+start = time.perf_counter()
 s = evaluate_board(board, BLACK)
+end = time.perf_counter()
 print(f"Score: {s}")
+print(f"Time: {end - start}")

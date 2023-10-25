@@ -15,7 +15,7 @@ MAXINT = 20000
 MININT = -20000
 DEPTH = 6
 
-HOT_IMPACT = 1
+HOT_IMPACT = 2
 
 
 class StonePosition:
@@ -46,6 +46,7 @@ class StoneMove:
         return f"{self.positions[0]} : {self.positions[1]}"
 
 
+
 # One point and its value.
 class Chess:
     def __init__(self, x, y, score):
@@ -64,55 +65,3 @@ class AlphaBeta:
     """
     def __bool__(self):
         return self.alpha >= self.beta
-
-
-class Edges():
-    def __init__(self):
-        self.min_i = 1
-        self.max_i = GRID_NUM - 1
-        self.min_j = 1
-        self.max_j = GRID_NUM - 1
-    
-
-    """
-        Return True if movement is out of edges
-    """
-    def check(self, x1, y1, x2, y2):
-        if (
-            self.min_i < x1 and 
-            self.min_i < x2 and
-            self.max_i > x1 and
-            self.max_i > x2 and
-            self.min_i < y1 and
-            self.min_i < y2 and
-            self.max_i > y1 and
-            self.max_i > y2
-        ):
-            return False
-        return True
-    
-    def update(self, x1, y1, x2, y2):
-        if x1 < self.min_i:
-            self.min_i = x1
-        elif x1 > self.max_i:
-            self.max_i = x1
-        if x2 < self.min_i:
-            self.min_i = x2
-        elif x2 > self.max_i:
-            self.max_i = x2
-        
-        if y1 < self.min_j:
-            self.min_j = y1
-        elif y1 > self.max_j:
-            self.max_j = y1
-        if y2 < self.min_j:
-            self.min_j = y2
-        elif y2 > self.max_j:
-            self.max_j = y2
-
-
-class Margin():
-    def __init__(self):
-        self.edges = Edges()
-        self.stack = deque()
-        self.stack.append(self.edges)

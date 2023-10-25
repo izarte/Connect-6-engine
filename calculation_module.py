@@ -41,7 +41,7 @@ class CalculationData():
     returns:
         - int: difference between safety and threats
 """
-def evaluate_board(board, my_color, edges):
+def evaluate_board(board, my_color):
     # Points for AI
     safety = 0
     # Points for oponent
@@ -55,7 +55,7 @@ def evaluate_board(board, my_color, edges):
     d2_r_data = CalculationData()
     d2_l_data = CalculationData()
 
-    for i in range(edges.min_i, edges.max_i + 1):
+    for i in range(1, GRID_NUM - 1):
         # Reset all data for each line
         h_data.reset()
         v_data.reset()
@@ -63,7 +63,7 @@ def evaluate_board(board, my_color, edges):
         d1_l_data.reset()
         d2_r_data.reset()
         d2_l_data.reset()
-        for j in range(edges.min_j, edges.max_j + 1):
+        for j in range(1, GRID_NUM - 1):
             # Check if current state is last in line so, must evaluate
             h_data.is_last = j == GRID_NUM - 2
             v_data.is_last = j == GRID_NUM - 2
