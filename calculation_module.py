@@ -18,8 +18,8 @@ class CalculationData():
         self.n = 0
         self.possible_spaces = 0
         self.spaces = 0
-        self.free_left = True
-        self.free_right = False
+        self.left_spaces = 0
+        self.right_spaces = 0
         self.is_last = False
     
     def reset(self):
@@ -29,8 +29,8 @@ class CalculationData():
         self.n = 0
         self.possible_spaces = 0
         self.spaces = 0
-        self.free_left = True
-        self.free_right = False
+        self.left_spaces = 0
+        self.right_spaces = 0
         self.is_last = False
 
 """
@@ -109,17 +109,14 @@ def evaluate_board(board, my_color):
 def check_actual(data, my_color, safety, threats):
     # Current position is blank
     if data.color == NOSTONE:
-        # Last position was blank too
-        if data.last_color == NOSTONE or data.continuous_n > 0:
-            # data.free_left = True
-            data.possible_spaces -= 1
         # Add possible spaces count
         data.possible_spaces += 1
         # Reset contonious counter
         data.continuous_n = 0
-        data.free_right = True
         # Last position evaluate previous combination
         if data.is_last:
+            # Last column so there is not space in "right" side
+            data.right_spaces = 0
             safety, threats = evaluate(data, data.last_color, my_color, safety, threats)
         return safety, threats
     
@@ -134,8 +131,8 @@ def check_actual(data, my_color, safety, threats):
         data.possible_spaces = 0
         # If is last position
         if data.is_last:
-            # Can't put stones in "right" (depends on direction)
-            data.free_right = False
+            # Last column so there is not space in "right" side
+            data.right_spaces = 0
             # Evaluate current stone counters
             safety, threats = evaluate(data, data.color, my_color, safety, threats)
 
@@ -143,13 +140,15 @@ def check_actual(data, my_color, safety, threats):
     if data.color != data.last_color:
         # Anystone has been found in current line
         if data.last_color != NOSTONE:
+            # Possible spaces become all right spaces for current stone configuration
+            data.right_spaces = data.possible_spaces
             # Set free rigth as true as there is some counter active
             data.free_right = False
             # Evaluate current stone counters
             safety, threats = evaluate(data, data.last_color, my_color, safety, threats)
-            # If last color is nos current, left side is not free
-            if data.color != data.last_color:
-                data.free_left = False
+        # Possible spaces are left spaces for new configuration
+        data.left_spaces = data.possible_spaces
+        data.possible_spaces = 0
         # Change last color and reset counters
         data.last_color = data.color
         data.n = 1
@@ -195,13 +194,15 @@ def calculate_spaces_score(n):
         - threats: modified if color != my_color
 """
 def evaluate(data, color, my_color, safety, threats):
+    free_left = data.n + data.left_spaces >= 6
+    free_right = data.n + data.right_spaces >= 6
+    value = calculate_stone_score(data.n) / calculate_spaces_score(data.spaces)
+    score = value * (1 + free_left + free_right)
     if data.n >= 6 and data.spaces == 0:
         score = MAXINT
-    value = calculate_stone_score(data.n) / calculate_spaces_score(data.spaces)
-    score = value * (1 + data.free_left + data.free_right)
     if score != 0:
-        print(f"n: {data.n} spaces: {data.spaces} left: {data.free_left} right: {data.free_right}")
-    if not data.free_left and not data.free_right and data.n + data.spaces < 6:
+        print(f"n: {data.n} spaces: {data.spaces} left: {data.left_spaces} right: {data.right_spaces}")
+    if not free_left and not free_right and data.n + data.spaces < 6:
             score = 0
     if color == my_color:
         safety += score
