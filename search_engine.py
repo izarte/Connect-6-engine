@@ -9,6 +9,7 @@ class SearchEngine():
         self.alphabeta_depth = None
         self.total_nodes = 0
 
+
     def update_parameters(self, board, hot_board, color, alphabeta_depth,):
         self.board = board
         self.hot_board = hot_board
@@ -16,7 +17,8 @@ class SearchEngine():
         self.alphabeta_depth = alphabeta_depth
         self.total_nodes = 0
 
-    def alpha_beta_search(self, depth, alpha, beta, our_colour, preMove):
+
+    def alpha_beta_search(self, our_colour, preMove):
     
         best_move = StoneMove()
         if (is_win_by_premove(self.board, preMove)):
@@ -33,7 +35,7 @@ class SearchEngine():
             best_move.positions[1].x = 10
             best_move.positions[1].y = 10
 
-            return best_move, alpha, 1
+            return best_move, MAXINT, 1
         
         alpha_beta = AlphaBeta()
 
@@ -52,14 +54,16 @@ class SearchEngine():
         best_move, score, nodes = tree.expand_tree()
         # best_move = self.find_possible_move()
         return best_move, score, nodes
-        
+
+
     def check_first_move(self):
         for i in range(1,len(self.board)-1):
             for j in range(1, len(self.board[i]) - 1):
                 if(self.board[i][j] != NOSTONE):
                     return False
         return True
-        
+
+
     def find_possible_move(self):
         move = StoneMove()
         found = 0
@@ -72,6 +76,7 @@ class SearchEngine():
                     if found == 2:
                         return move
         return move
+
 
 def flush_output():
     import sys

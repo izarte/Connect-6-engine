@@ -13,9 +13,9 @@ ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 6
+DEPTH = 1
 
-HOT_IMPACT = 2
+HOT_IMPACT = 1
 
 
 class StonePosition:

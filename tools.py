@@ -28,6 +28,7 @@ def unmake_move(board, hot_board, move):
     make = True if is maken move, False if is unmaken
 """
 def update_hot_board(hot_board: dict, board, moves: StoneMove, make: bool):
+    counter = 0
     for move in moves.positions:
         # If make action and position is in hot_board, delete it
         if make and (move.x, move.y) in hot_board:
@@ -58,12 +59,29 @@ def update_hot_board(hot_board: dict, board, moves: StoneMove, make: bool):
                 if not (target.x, target.y) in hot_board: # If the hot position is not already created, create hot position
                     # my_print(f"CREATED {target} by {impact}", "log.txt")
                     hot_board[(target.x, target.y)] = [(impact.x, impact.y)]
+                    counter += 1
                     continue
                 if not (impact.x, impact.y) in hot_board[(target.x, target.y)]:# If it already exists, append actual position to store impact in the same hot position
                     hot_board[(target.x, target.y)].append((impact.x, impact.y))
                     # my_print(f"ADD {target} by {impact}", "log.txt")
+    return counter
 
-    # write_hot_board(hot_board)
+
+# Calculate hot_board impact for a move
+def calculate_combination_value(board, hot_board, combination):
+    value = 0
+    for move in combination:
+        for row in range(move[0] - HOT_IMPACT, move[0] + HOT_IMPACT + 1):
+            for col in range(move[1] - HOT_IMPACT, move[1] + HOT_IMPACT + 1):
+                if not is_valid_pose(row, col):
+                    continue
+                if board[row][col] != NOSTONE:
+                    value += 1
+    # move = StoneMove(combination)
+    # value = update_hot_board(hot_board, board, move, make = True)
+    # update_hot_board(hot_board, board, move, make = False)
+    return value
+
 
 
 def write_hot_board(hot_board):
