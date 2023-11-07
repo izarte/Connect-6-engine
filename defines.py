@@ -13,7 +13,7 @@ ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 1
+DEPTH = 3
 
 HOT_IMPACT = 1
 

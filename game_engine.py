@@ -78,6 +78,7 @@ class GameEngine:
                 flush_output()
                 score = evaluate_board(board=self.m_board, my_color=self.m_chess_type)
                 my_print(f"Score: {score}", "score.log")
+                write_hot_board(self.hot_board)
             elif msg.startswith("new"):
                 self.init_game()
                 if msg[4:] == "black":
@@ -91,12 +92,13 @@ class GameEngine:
                     self.m_chess_type = WHITE
             elif msg.startswith("move"):
                 self.m_best_move = msg2move(msg[5:])
-                # make_move(self.m_board, self.hot_board, self.m_best_move, self.m_chess_type ^ 3)
+                make_move(self.m_board, self.hot_board, self.m_best_move, self.m_chess_type ^ 3)
                 if is_win_by_premove(self.m_board, self.m_best_move):
                     print("We lost!")
+                    continue
                 self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move)
                 msg = f"move {move2msg(self.m_best_move)}"
-                # make_move(self.m_board, self.hot_board, self.m_best_move, self.m_chess_type)
+                make_move(self.m_board, self.hot_board, self.m_best_move, self.m_chess_type)
                 print(msg)
                 flush_output()
             elif msg.startswith("depth"):
@@ -113,13 +115,14 @@ class GameEngine:
         start = 0
         end = 0
 
-        start = time.perf_counter()
         
         self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.m_chess_type, self.m_alphabeta_depth)
-        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove)
+        start = time.perf_counter()
+        # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove)
+        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove)
         end = time.perf_counter()
 
-        my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
+        # my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
         print(f"AB Time:\t{end - start:.3f}")
         print(f"Node:\t{self.m_search_engine.total_nodes}\n")
         print(f"Score:\t{score:.3f}")

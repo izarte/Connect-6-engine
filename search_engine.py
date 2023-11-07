@@ -56,6 +56,44 @@ class SearchEngine():
         return best_move, score, nodes
 
 
+    def negascout_search(self, our_colour, preMove):
+    
+        best_move = StoneMove()
+        if (is_win_by_premove(self.board, preMove)):
+            if (our_colour == self.chess_type):
+                #Opponent wins.
+                return None, 0
+            else:
+                #Self wins.
+                return None, MININT + 1
+        
+        if(self.check_first_move()):
+            best_move.positions[0].x = 10
+            best_move.positions[0].y = 10
+            best_move.positions[1].x = 10
+            best_move.positions[1].y = 10
+
+            return best_move, MAXINT, 1
+        
+        alpha_beta = AlphaBeta()
+
+        tree = TreeNode(
+            created_move = None,
+            level = 0,
+            slelection_method_is_max = True,
+            board = self.board,
+            hot_board = self.hot_board,
+            color = our_colour,
+            my_color = our_colour,
+            total_nodes = 0,
+            parent_alpha_beta = alpha_beta
+            )
+        
+        best_move, score, nodes = tree.negaScout()
+        # best_move = self.find_possible_move()
+        return best_move, score, nodes
+
+
     def check_first_move(self):
         for i in range(1,len(self.board)-1):
             for j in range(1, len(self.board[i]) - 1):
