@@ -1,17 +1,19 @@
+from collections import deque
+
 GRID_NUM = 21               # Number of the board, 19*19 plus edges.
 GRID_COUNT = 361            # Sum of the points in the board.
 BLACK = 1                   # Black flag in the board.
 WHITE = 2                   # White flag in the board.
 BORDER = 3                  # Border flag in the board.
 NOSTONE = 0                 # Empty flag.
-MSG_LENGTH = 512            #Tamaño del mensaje
-GRID_COUNT = 361            #Sum of the points in the board.
+MSG_LENGTH = 512            # Tamaño del mensaje
+GRID_COUNT = 361            # Sum of the points in the board.
 LOG_FILE = "tia-engine.log"
 ENGINE_NAME = "TIA.Connect6"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000
-DEPTH = 3
+DEPTH = 1
 
 HOT_IMPACT = 1
 
@@ -42,6 +44,7 @@ class StoneMove:
     # Function to print StoneMove data
     def __str__(self):
         return f"{self.positions[0]} : {self.positions[1]}"
+
 
 
 # One point and its value.

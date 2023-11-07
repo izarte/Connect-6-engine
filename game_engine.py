@@ -4,6 +4,9 @@ import sys
 from search_engine import SearchEngine
 import time
 
+from calculation_module import evaluate_board
+
+
 class GameEngine:
     def __init__(self, name=ENGINE_NAME):
         if name and len(name) > 0:
@@ -73,6 +76,8 @@ class GameEngine:
                 msg = f"move {move2msg(self.m_best_move)}"
                 print(msg)
                 flush_output()
+                score = evaluate_board(board=self.m_board, my_color=self.m_chess_type)
+                my_print(f"Score: {score}", "score.log")
             elif msg.startswith("new"):
                 self.init_game()
                 if msg[4:] == "black":
@@ -111,7 +116,7 @@ class GameEngine:
         start = time.perf_counter()
         
         self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.m_chess_type, self.m_alphabeta_depth)
-        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(self.m_alphabeta_depth, MININT, MAXINT, ourColor, bestMove)
+        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove)
         end = time.perf_counter()
 
         my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
@@ -120,6 +125,7 @@ class GameEngine:
         print(f"Score:\t{score:.3f}")
 
         return bestMove
+
 
 def flush_output():
     sys.stdout.flush()
