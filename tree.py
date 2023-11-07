@@ -22,7 +22,6 @@ class TreeNode:
         self.parent_alpha_beta = parent_alpha_beta
         self.alpha_beta = AlphaBeta(parent_alpha_beta.alpha, parent_alpha_beta.beta)
 
-
     """
         Calculates all possible moves and expand tree for each posibility until depth is reached
     """
@@ -93,7 +92,6 @@ class TreeNode:
         # Return the best value if it is a leaf or an intermediate level
         return best_option, self.total_nodes
 
-
     """
         Return best value due to max or min selection method
         When slection_method_is_max is max turn (True):
@@ -106,66 +104,6 @@ class TreeNode:
             return max(self.possible_moves)
         return min(self.possible_moves)        
 
-    # def negaScout(self):
-    #     if self.is_leaf:
-    #         t = time.perf_counter()
-    #         v = evaluate_board(self.board, self.my_color)
-    #         my_print(f"EVALUTAION {time.perf_counter() - t}", "puta.txt")
-    #         return v
-
-    #     if self.alpha_beta:
-    #         return MININT
-    #     t = time.perf_counter()
-    #     possible_combinations = list(itertools.combinations(self.hot_board, 2))
-    #     sorted_combinations = sorted(
-    #         possible_combinations,
-    #         key=lambda combination: calculate_combination_value(self.board, self.hot_board, combination))
-    #     my_print(f"COMBINATION {time.perf_counter() - t}", "puta.txt")
-
-    #     if self.alpha_beta:
-    #         return self.alpha_beta.alpha
-
-    #     a = self.alpha_beta.alpha
-    #     b = self.alpha_beta.beta
-    #     best_move = StoneMove()
-    #     best_score = MININT
-    #     for combination in sorted_combinations:
-    #         self.total_nodes += 1
-    #         move = StoneMove(combination)
-    #         make_move(self.board, self.hot_board, move, self.color)
-            
-    #         alpha_beta = AlphaBeta(alpha=-b, beta=-a)
-    #         node = TreeNode(
-    #             created_move=move,
-    #             level=(self.level + 1),
-    #             slelection_method_is_max=not self.slelection_method_is_max,
-    #             board=self.board,
-    #             hot_board=self.hot_board,
-    #             color=self.color ^ 3,
-    #             my_color=self.my_color,
-    #             total_nodes=self.total_nodes,
-    #             parent_alpha_beta=alpha_beta
-    #         )
-
-    #         score = node.negaScout()
-    #         score = -score
-    #         unmake_move(self.board, self.hot_board, move)
-
-    #         if score > best_score:
-    #             best_score = score
-    #             best_move = move
-            
-    #         if a < score:
-    #             a = score
-
-    #         if a >= b:
-    #             return a
-        
-    #     if self.level == 0:
-    #         return best_move, best_score, self.total_nodes
-    #     return best_score
-
-
     def negaScout(self):
         if self.is_leaf:
             t = time.perf_counter()
@@ -173,17 +111,12 @@ class TreeNode:
             # my_print(f"EVALUTAION {time.perf_counter() - t}", "puta.txt")
             return v, self.total_nodes
 
-        # if self.alpha_beta:
-        #     return MININT
         t = time.perf_counter()
         possible_combinations = list(itertools.combinations(self.hot_board, 2))
         sorted_combinations = sorted(
             possible_combinations,
             key=lambda combination: calculate_combination_value(self.board, self.hot_board, combination))
         # my_print(f"COMBINATION {time.perf_counter() - t}", "puta.txt")
-
-        # if self.alpha_beta:
-        #     return self.alpha_beta.alpha
 
         a = self.alpha_beta.alpha
         b = self.alpha_beta.beta
@@ -220,7 +153,7 @@ class TreeNode:
             if a >= self.alpha_beta.beta:
                 break
             b = a + 1
-        
+
         if self.level == 0:
             return best_move, a, self.total_nodes
         return a, self.total_nodes
