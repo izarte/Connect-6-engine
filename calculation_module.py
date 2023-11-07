@@ -200,8 +200,8 @@ def evaluate(data, color, my_color, safety, threats):
     score = value * (1 + free_left + free_right)
     if data.n >= 6 and data.spaces == 0:
         score = MAXINT
-    if score != 0:
-        print(f"n: {data.n} spaces: {data.spaces} left: {data.left_spaces} right: {data.right_spaces}")
+    # if score != 0:
+    #     print(f"n: {data.n} spaces: {data.spaces} left: {data.left_spaces} right: {data.right_spaces}")
     if not free_left and not free_right and data.n + data.spaces < 6:
             score = 0
     if color == my_color:
