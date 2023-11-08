@@ -33,6 +33,29 @@ class CalculationData():
         self.right_spaces = 0
         self.is_last = False
 
+
+class BoardScore():
+    def __init__(self):
+        self.safety = 0
+        self.possible_safety = 0
+        self.threats = 0
+        self.possible_threats = 0
+        self.weights = []
+    
+    def set_weights(self, weights):
+        self.weights = weights
+    
+    def ponderate(self):
+        score = self.weights[0] * self.safety
+        score += self.weights[1] * self.possible_safety
+        score += self.weights[2] * self.threats
+        score += self.weights[3] * self.possible_threats
+        return score
+
+    def __str__(self):
+        return f"Safety: {self.safety} possible_safety: {self.possible_safety} threats: {self.threats} possible_threats: {self.possible_threats}"
+
+
 """
     Function evaluate current board configuration
     params:
@@ -41,11 +64,9 @@ class CalculationData():
     returns:
         - int: difference between safety and threats
 """
-def evaluate_board(board, my_color):
-    # Points for AI
-    safety = 0
-    # Points for oponent
-    threats = 0
+def evaluate_board(board, my_color, genetic_weights = None):
+    # Evaluation metrics
+    board_score = BoardScore()
 
     # Data structure for each directon searched
     h_data = CalculationData()
@@ -72,9 +93,9 @@ def evaluate_board(board, my_color):
             v_data.color = board[j][i]
 
             # Calculate horizontal (vertical due to i,j configuration)
-            safety, threats = check_actual(h_data, my_color, safety, threats)
+            board_score = check_actual(h_data, my_color, board_score)
             # Calculate vertical (horizontal due to i,j configuration)
-            safety, threats = check_actual(v_data, my_color, safety, threats)
+            board_score = check_actual(v_data, my_color, board_score)
 
             # For diagonal searches
             if j < i:
@@ -95,18 +116,26 @@ def evaluate_board(board, my_color):
                     d1_l_data.color = board[GRID_NUM -  2 - i + j][GRID_NUM - 2 - j]
                     d2_l_data.color = board[GRID_NUM - 2 - i + j][j]
                     # Calculate below principal diagonal for both directions
-                    safety, threats = check_actual(d1_l_data, my_color, safety, threats)
-                    safety, threats = check_actual(d2_l_data, my_color, safety, threats)
+                    board_score = check_actual(d1_l_data, my_color, board_score)
+                    board_score = check_actual(d2_l_data, my_color, board_score)
                 # Calculate above principal diagonal for both directions
-                safety, threats = check_actual(d1_r_data, my_color, safety, threats)
-                safety, threats = check_actual(d2_r_data, my_color, safety, threats)
+                board_score = check_actual(d1_r_data, my_color, board_score)
+                board_score = check_actual(d2_r_data, my_color, board_score)
+
+    # print(board_score)
+
+    if genetic_weights:
+        board_score.set_weights(genetic_weights)
+        score = board_score.ponderate()
+    else:
+        score = board_score.safety - board_score.threats
 
     # print(f"Safety: {safety} Threats: {threats}")
     # my_print(f"Safety: {safety} Threats: {threats}", "sco.log")
-    return safety - threats
+    return score
 
 
-def check_actual(data, my_color, safety, threats):
+def check_actual(data, my_color, board_score):
     # Current position is blank
     if data.color == NOSTONE:
         # Add possible spaces count
@@ -117,8 +146,8 @@ def check_actual(data, my_color, safety, threats):
         if data.is_last:
             # Last column so there is not space in "right" side
             data.right_spaces = 0
-            safety, threats = evaluate(data, data.last_color, my_color, safety, threats)
-        return safety, threats
+            board_score = genetic_evaluation(data, data.last_color, my_color, board_score)
+        return board_score
     
     # my_print(f"i: {i} j: {j} data.color: {data.color}", "sco.log")
     # Same color as last seen
@@ -134,7 +163,7 @@ def check_actual(data, my_color, safety, threats):
             # Last column so there is not space in "right" side
             data.right_spaces = 0
             # Evaluate current stone counters
-            safety, threats = evaluate(data, data.color, my_color, safety, threats)
+            board_score = genetic_evaluation(data, data.color, my_color, board_score)
 
     # Current color is different than last seen
     if data.color != data.last_color:
@@ -145,7 +174,7 @@ def check_actual(data, my_color, safety, threats):
             # Set free rigth as true as there is some counter active
             data.free_right = False
             # Evaluate current stone counters
-            safety, threats = evaluate(data, data.last_color, my_color, safety, threats)
+            board_score = genetic_evaluation(data, data.last_color, my_color, board_score)
         # Possible spaces are left spaces for new configuration
         data.left_spaces = data.possible_spaces
         data.possible_spaces = 0
@@ -153,7 +182,7 @@ def check_actual(data, my_color, safety, threats):
         data.last_color = data.color
         data.n = 1
         data.continuous_n = 1
-    return safety, threats
+    return board_score
 
 """
     Function to score n stones in line without oponent stones
@@ -193,7 +222,7 @@ def calculate_spaces_score(n):
         - safety: modified if color == my_color
         - threats: modified if color != my_color
 """
-def evaluate(data, color, my_color, safety, threats):
+def evaluate(data, color, my_color, board_score):
     free_left = data.n + data.left_spaces >= 6
     free_right = data.n + data.right_spaces >= 6
     value = calculate_stone_score(data.n) / calculate_spaces_score(data.spaces)
@@ -205,12 +234,37 @@ def evaluate(data, color, my_color, safety, threats):
     if not free_left and not free_right and data.n + data.spaces < 6:
             score = 0
     if color == my_color:
-        safety += score
+        board_score.safety += score
     else:
-        threats += score
-    return safety, threats
+        board_score.threats += score
+    return board_score
 
                     
-class CalculationModule():
-    def calculate():
-       return random.randint(-sys.maxsize, sys.maxsize)
+def genetic_evaluation(data, color, my_color, board_score):
+    free_left = data.n + data.left_spaces >= 6
+    free_right = data.n + data.right_spaces >= 6
+    score = 0
+    if data.n >= 6 and data.spaces == 0:
+        score = MAXINT
+    elif data.n + data.spaces + data.left_spaces + data.right_spaces < 6:
+            score = 0
+    elif data.n >= 4:
+        if data.spaces <= 2:
+            score = 2
+        elif data.spaces <= 4:
+            score = 1
+    elif data.n > 2:
+        if data.spaces <= 2:
+            score = 1
+    
+    if color == my_color:
+        if score == 1:
+            board_score.possible_safety += 1
+        if score == 2:
+            board_score.safety += 1
+    else:
+        if score == 1:
+            board_score.possible_threats += 1
+        if score == 2:
+            board_score.threats += 1
+    return board_score

@@ -1,5 +1,5 @@
 from defines import *
-from calculation_module import CalculationModule, evaluate_board
+from calculation_module import evaluate_board
 from tools import make_move, unmake_move, calculate_combination_value, my_print
 
 import itertools
@@ -7,7 +7,7 @@ import time
 
 
 class TreeNode:
-    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, color, my_color, total_nodes, parent_alpha_beta):
+    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, color, my_color, total_nodes, parent_alpha_beta, weights=None):
         self.created_move = created_move
         self.slelection_method_is_max = slelection_method_is_max
         self.board = board
@@ -21,6 +21,7 @@ class TreeNode:
         self.total_nodes = total_nodes
         self.parent_alpha_beta = parent_alpha_beta
         self.alpha_beta = AlphaBeta(parent_alpha_beta.alpha, parent_alpha_beta.beta)
+        self.weights = weights
 
     """
         Calculates all possible moves and expand tree for each posibility until depth is reached
@@ -107,7 +108,7 @@ class TreeNode:
     def negaScout(self):
         if self.is_leaf:
             t = time.perf_counter()
-            v = evaluate_board(self.board, self.my_color)
+            v = evaluate_board(self.board, self.my_color, self.weights)
             # my_print(f"EVALUTAION {time.perf_counter() - t}", "puta.txt")
             return v, self.total_nodes
 

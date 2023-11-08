@@ -56,7 +56,7 @@ class SearchEngine():
         return best_move, score, nodes
 
 
-    def negascout_search(self, our_colour, preMove):
+    def negascout_search(self, our_colour, preMove, weights):
     
         best_move = StoneMove()
         if (is_win_by_premove(self.board, preMove)):
@@ -86,7 +86,8 @@ class SearchEngine():
             color = our_colour,
             my_color = our_colour,
             total_nodes = 0,
-            parent_alpha_beta = alpha_beta
+            parent_alpha_beta = alpha_beta,
+            weights = weights
             )
         
         best_move, score, nodes = tree.negaScout()

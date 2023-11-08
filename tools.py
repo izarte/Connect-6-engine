@@ -116,6 +116,12 @@ def is_win_by_premove(board, preMove):
                 return True
     return False
 
+def check_full(board):
+    for row in board:
+        if 0 in row:
+            return False
+    return True
+
 
 def get_msg(max_len):
     buf = input().strip()

@@ -3,7 +3,10 @@ from tools import *
 import sys
 from search_engine import SearchEngine
 import time
+import math
 
+from genetic import Genetic
+from tournament import Tournament
 from calculation_module import evaluate_board
 
 
@@ -14,7 +17,7 @@ class GameEngine:
                 self.m_engine_name = name
             else:
                 print(f"Too long Engine Name: {name}, should be less than: {MSG_LENGTH}")
-        self.m_alphabeta_depth = 6
+        self.m_alphabeta_depth = DEPTH
         self.m_board = t = [ [0]*GRID_NUM for i in range(GRID_NUM)]
         self.hot_board = {}
         self.init_game()
@@ -40,7 +43,9 @@ class GameEngine:
             " depth d     - set the alpha beta search depth, default is 6.\n"
             " vcf         - set vcf search.\n"
             " unvcf       - set none vcf search.\n"
-            " help        - print this help.\n")
+            " help        - print this help.\n"
+            " genetic     - start genetic competition.\n"
+        )
 
     def run(self):
         msg = ""
@@ -108,24 +113,42 @@ class GameEngine:
                 print(f"Set the search depth to {self.m_alphabeta_depth}.\n")
             elif msg == "help":
                 self.on_help()
+            elif msg == "genetic":
+                POPULATION = 8
+                EPOCHS = 5
+                genetic = Genetic(POPULATION, 5)
+                iterations = int(math.log2(POPULATION))  
+                print(f"Iterations: {iterations} for {len(genetic.population)} chromosomes")    
+                for epoch in range(EPOCHS):
+                    # print(genetic.population) 
+                    tournament = Tournament(genetic.population)
+                    for i in range(iterations):
+                        tournament.create_matches(score_requisite=i)
+                        tournament.play_matches(self.m_board, self.hot_board, self.search_a_move)
+                        # print(tournament.scores)
+                    genetic.set_evaluations(tournament.scores)
+                    genetic.reproduction()
         return 0
 
-    def search_a_move(self, ourColor, bestMove):
-        score = 0
+    def search_a_move(self, ourColor, bestMove, weights=None, tournament_data=None):
+        score = 0  
         start = 0
         end = 0
 
-        
+        if tournament_data:
+            self.m_chess_type = tournament_data['color']
+            self.m_board = tournament_data['board']
+            self.hot_board = tournament_data['hot_board']
         self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.m_chess_type, self.m_alphabeta_depth)
         start = time.perf_counter()
         # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove)
-        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove)
+        bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove, weights)
         end = time.perf_counter()
 
         # my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
-        print(f"AB Time:\t{end - start:.3f}")
-        print(f"Node:\t{self.m_search_engine.total_nodes}\n")
-        print(f"Score:\t{score:.3f}")
+        # print(f"AB Time:\t{end - start:.3f}")
+        # print(f"Node:\t{self.m_search_engine.total_nodes}\n")
+        # print(f"Score:\t{score:.3f}")
 
         return bestMove
 
