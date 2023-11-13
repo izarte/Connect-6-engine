@@ -1,5 +1,5 @@
 from defines import *
-from tools import is_valid_pose, my_print
+# from tools import is_valid_pose, my_print
 
 import random
 import sys
@@ -41,6 +41,8 @@ class BoardScore():
         self.threats = 0
         self.possible_threats = 0
         self.weights = []
+        self.win = 0
+        self.lose = 0
     
     def set_weights(self, weights):
         self.weights = weights
@@ -50,6 +52,10 @@ class BoardScore():
         score += self.weights[1] * self.possible_safety
         score += self.weights[2] * self.threats
         score += self.weights[3] * self.possible_threats
+        if self.win > 0:
+            score = MAXINT * self.win
+        if self.lose > 0:
+            score = -MAXINT * self.lose
         return score
 
     def __str__(self):
@@ -262,9 +268,15 @@ def genetic_evaluation(data, color, my_color, board_score):
             board_score.possible_safety += 1
         if score == 2:
             board_score.safety += 1
+        if score == MAXINT:
+            print("WIN")
+            board_score.win += 1
     else:
         if score == 1:
             board_score.possible_threats += 1
         if score == 2:
             board_score.threats += 1
+        if score == MAXINT:
+            print("LOSE")
+            board_score.lose += 1
     return board_score
