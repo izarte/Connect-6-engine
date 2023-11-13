@@ -269,7 +269,6 @@ def genetic_evaluation(data, color, my_color, board_score):
         if score == 2:
             board_score.safety += 1
         if score == MAXINT:
-            print("WIN")
             board_score.win += 1
     else:
         if score == 1:
@@ -277,6 +276,5 @@ def genetic_evaluation(data, color, my_color, board_score):
         if score == 2:
             board_score.threats += 1
         if score == MAXINT:
-            print("LOSE")
             board_score.lose += 1
     return board_score
