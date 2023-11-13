@@ -5,7 +5,7 @@ from calculation_module import evaluate_board
 import time
 
 board = [ [0]*GRID_NUM for i in range(GRID_NUM)]
-
+hot_board = {}
 init_board(board)
 
 # board[10][10] = BLACK
@@ -15,12 +15,15 @@ init_board(board)
 board[4][9] = BLACK
 
 
-board[4][8] = WHITE
-board[4][7] = WHITE
-board[4][6] = WHITE
-board[4][5] = WHITE
-board[4][4] = WHITE
-board[4][3] = WHITE
+board[8][8] = BLACK
+board[7][7] = BLACK
+board[6][6] = BLACK
+board[5][5] = BLACK
+
+# move = StoneMove(((4, 4), (3, 3)))
+# make_move(board, hot_board, move, BLACK)
+# board[4][4] = WHITE
+# board[3][3] = WHITE
 
 board[4][2] = BLACK
 
