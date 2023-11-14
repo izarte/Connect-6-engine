@@ -10,15 +10,17 @@ class SearchEngine():
         self.total_nodes = 0
 
 
-    def update_parameters(self, board, hot_board, color, alphabeta_depth,):
+    def update_parameters(self, board, hot_board, true_board, remembered_moves, color, alphabeta_depth,):
         self.board = board
         self.hot_board = hot_board
+        self.remembered_moves = remembered_moves
         self.chess_type = color
         self.alphabeta_depth = alphabeta_depth
         self.total_nodes = 0
+        self.true_board = true_board
 
 
-    def alpha_beta_search(self, our_colour, preMove):
+    def alpha_beta_search(self, our_colour, preMove, weights):
     
         best_move = StoneMove()
         if (is_win_by_premove(self.board, preMove)):
@@ -45,10 +47,13 @@ class SearchEngine():
             slelection_method_is_max = True,
             board = self.board,
             hot_board = self.hot_board,
+            true_board=self.true_board,
+            remembered_moves = self.remembered_moves,
             color = our_colour,
             my_color = our_colour,
             total_nodes = 0,
-            parent_alpha_beta = alpha_beta
+            parent_alpha_beta = alpha_beta,
+            weights = weights
             )
         
         best_move, score, nodes = tree.expand_tree()
@@ -83,6 +88,7 @@ class SearchEngine():
             slelection_method_is_max = True,
             board = self.board,
             hot_board = self.hot_board,
+            remembered_moves = self.remembered_moves,
             color = our_colour,
             my_color = our_colour,
             total_nodes = 0,

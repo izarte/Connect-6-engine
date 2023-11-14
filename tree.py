@@ -1,17 +1,20 @@
 from defines import *
 from calculation_module import evaluate_board
-from tools import make_move, unmake_move, calculate_combination_value, my_print
+from hot_board import calculate_combination_value
+from tools import make_move, unmake_move, is_win_by_premove, my_print, print_board
 
 import itertools
 import time
 
 
 class TreeNode:
-    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, color, my_color, total_nodes, parent_alpha_beta, weights=None):
+    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, true_board, remembered_moves, color, my_color, total_nodes, parent_alpha_beta, weights=None):
         self.created_move = created_move
         self.slelection_method_is_max = slelection_method_is_max
         self.board = board
         self.hot_board = hot_board
+        self.true_board = true_board
+        self.remembered_moves = remembered_moves
         self.color = color
         self.my_color = my_color
         # Dictonary with labels as score and keys as move that creates scored scenario
@@ -31,22 +34,36 @@ class TreeNode:
         # Check if actual node is a leaf
         if self.is_leaf:
             # self.possible_moves[CalculationModule.calculate()] = None
-            self.possible_moves[evaluate_board(self.board, self.my_color)] = None
+            self.possible_moves[evaluate_board(self.board, self.my_color, self.weights)] = None
             sorted_combinations = [] # Don't execute loop 
         else:
             t = time.perf_counter()
             sorted_combinations = sorted(
                 possible_combinations,
-                key=lambda combination: calculate_combination_value(self.board, self.hot_board, combination))
+                key=lambda combination: calculate_combination_value(self.board, combination),
+                reverse=True)
+            sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x) > 0, sorted_combinations))
+
 
         for combination in sorted_combinations:
+            # if self.level == 1:
+            # print(self.level)
+            # for rem in self.remembered_moves['queue']:
+            #     print(rem, end=', ')
+            # print('d: ', end='')
+            # for rem in self.remembered_moves['discarded_queue']:
+            #     print(rem, end=', ')
+            # print()
             # Check min-max condition to stop expanding
             if self.alpha_beta:
                 break
             self.total_nodes += 1
             move = StoneMove(combination)
             # Make move to change actual state
-            make_move(self.board, self.hot_board, move, self.color)
+            make_move(board=self.board, hot_board=self.hot_board, true_board=self.true_board, remembered_moves=self.remembered_moves, move=move, color=self.color, store=self.level != DEPTH - 1, true_make=False)
+            # if is_win_by_premove(self.board, move):
+                # unmake_move(board=self.board, hot_board=self.hot_board, true_board=self.true_board, remembered_moves=self.remembered_moves, move=move)
+
             # Create child
             node = TreeNode(
                 created_move = move,
@@ -54,15 +71,18 @@ class TreeNode:
                 slelection_method_is_max = not self.slelection_method_is_max,
                 board = self.board,
                 hot_board = self.hot_board,
+                true_board = self.true_board,
+                remembered_moves = self.remembered_moves,
                 color = self.color ^ 3,
                 my_color = self.my_color,
                 total_nodes = self.total_nodes,
-                parent_alpha_beta = self.alpha_beta
+                parent_alpha_beta = self.alpha_beta,
+                weights=self.weights
             )
 
             score, self.total_nodes = node.expand_tree(last_level)
             # Unmake move to return original state (at this point all childs have been explored)
-            unmake_move(self.board, self.hot_board, move)
+            unmake_move(board=self.board, hot_board=self.hot_board, true_board=self.true_board, remembered_moves=self.remembered_moves, move=move)
             # Only save movements for first node
             self.possible_moves[score] = None
             if self.level == 0:
@@ -106,6 +126,7 @@ class TreeNode:
         return min(self.possible_moves)        
 
     def negaScout(self):
+        # print(self.level)
         if self.is_leaf:
             t = time.perf_counter()
             v = evaluate_board(self.board, self.my_color, self.weights)
@@ -114,11 +135,16 @@ class TreeNode:
 
         t = time.perf_counter()
         possible_combinations = list(itertools.combinations(self.hot_board, 2))
+        maximum = 0
         sorted_combinations = sorted(
             possible_combinations,
-            key=lambda combination: calculate_combination_value(self.board, self.hot_board, combination))
+            key=lambda combination: calculate_combination_value(self.board, self.hot_board, combination, self.color, maximum),
+            reverse=True)
         # my_print(f"COMBINATION {time.perf_counter() - t}", "puta.txt")
-
+        # print(len(sorted_combinations))
+        sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, self.hot_board, x, self.color, 0) > maximum // 2, sorted_combinations))
+        # print(len(sorted_combinations))
+        # sorted_combinations = sorted_combinations[:100]
         a = self.alpha_beta.alpha
         b = self.alpha_beta.beta
         best_move = StoneMove()
@@ -126,7 +152,7 @@ class TreeNode:
             # my_print(f"{self.level} {combination}", "puta.txt")
             self.total_nodes += 1
             move = StoneMove(combination)
-            make_move(self.board, self.hot_board, move, self.color)
+            make_move(board=self.board, hot_board=self.hot_board, remembered_moves=self.remembered_moves, move=move, color=self.color, store=self.level != DEPTH - 1)
             
             alpha_beta = AlphaBeta(alpha=-b, beta=-a)
             node = TreeNode(
@@ -135,6 +161,7 @@ class TreeNode:
                 slelection_method_is_max = not self.slelection_method_is_max,
                 board=self.board,
                 hot_board=self.hot_board,
+                remembered_moves=self.remembered_moves,
                 color=self.color ^ 3,
                 my_color=self.my_color,
                 total_nodes=self.total_nodes,
@@ -147,7 +174,7 @@ class TreeNode:
                 node.alpha_beta = AlphaBeta(alpha=-self.alpha_beta.beta, beta=-score)
                 a, self.total_nodes = node.negaScout()
                 a = -a
-            unmake_move(self.board, self.hot_board, move)
+            unmake_move(board=self.board, hot_board=self.hot_board, remembered_moves=self.remembered_moves, move=move)
             a = max(a, score)
             if a == score:
                 best_move = move

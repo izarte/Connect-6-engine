@@ -1,9 +1,10 @@
-from defines import *
 import time
 
-# Point (x, y) if in the valid position of the board.
-def is_valid_pose(x,y):
-    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
+
+from defines import *
+from hot_board import make_hot_board, unmake_hot_board, calculate_combination_value
+from calculation_module import evaluate_board
+# from update_hot_board import update_hot_board
 
 
 def init_board(board):
@@ -14,62 +15,19 @@ def init_board(board):
             board[i][j] = NOSTONE
 
 
-def make_move(board, hot_board: dict, move, color):
+def make_move(board, hot_board: dict, true_board, remembered_moves, move, color, store=True, true_make=True):
     board[move.positions[0].x][move.positions[0].y] = color
     board[move.positions[1].x][move.positions[1].y] = color
-    update_hot_board(hot_board, board, move, make=True)
+    if true_make:
+        for m in move.positions:
+            true_board.append((m.x, m.y))
+    make_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves, store=store)
 
 
-def unmake_move(board, hot_board, move):
+def unmake_move(board, hot_board, true_board, remembered_moves, move):
     board[move.positions[0].x][move.positions[0].y] = NOSTONE
     board[move.positions[1].x][move.positions[1].y] = NOSTONE
-    update_hot_board(hot_board, board, move, make=False)
-
-
-"""
-    make = True if is maken move, False if is unmaken
-"""
-def update_hot_board(hot_board: dict, board, moves: StoneMove, make: bool):
-    for move in moves.positions:
-        # If make action and position is in hot_board, delete it
-        if (move.x, move.y) in hot_board:
-            del hot_board[(move.x, move.y)]
-        # Go through all the neighbors
-        for row in range(move.x - HOT_IMPACT, move.x + HOT_IMPACT + 1):
-            for col in range(move.y - HOT_IMPACT, move.y + HOT_IMPACT + 1):
-                # If current iteration is move, ignore
-                if make and row == move.x and col == move.y:
-                    continue
-                # If current position is outside board limits, ignore
-                if not is_valid_pose(row, col):
-                    continue
-                if board[row][col] != NOSTONE: # If there's already a stone in the main board, ignore
-                    continue
-                target = StonePosition(row, col)
-                impact = StonePosition(move.x, move.y)
-                # Unmake action. Unmaken move should be hot
-                if not make:
-                    target = StonePosition(move.x, move.y)
-                    impact = StonePosition(row, col)
-                    if (row, col) in hot_board:
-                        if (move.x, move.y) in hot_board[(row, col)]:
-                            # my_print(f"DELETED {row}, {col} by {move}", "log.txt")
-                            hot_board[(row, col)].remove((move.x, move.y))
-                        if not hot_board[(row, col)]:
-                            del hot_board[(row, col)]
-                else:
-                    if not (target.x, target.y) in hot_board: # If the hot position is not already created, create hot position
-                        # my_print(f"CREATED {target} by {impact}", "log.txt")
-                        hot_board[(target.x, target.y)] = [(impact.x, impact.y)]
-                        continue
-                    if not (impact.x, impact.y) in hot_board[(target.x, target.y)]:# If it already exists, append actual position to store impact in the same hot position
-                        hot_board[(target.x, target.y)].append((impact.x, impact.y))
-                        # my_print(f"ADD {target} by {impact}", "log.txt")
-
-
-# Calculate hot_board impact for a move
-def calculate_combination_value(board, hot_board, combination):
-    return len(hot_board[combination[0]]) + len(hot_board[combination[1]])
+    unmake_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves)
 
 
 def write_hot_board(hot_board):
@@ -115,6 +73,7 @@ def is_win_by_premove(board, preMove):
             if count >= 6:
                 return True
     return False
+
 
 def check_full(board):
     for row in board:

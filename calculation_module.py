@@ -46,16 +46,17 @@ class BoardScore():
     
     def set_weights(self, weights):
         self.weights = weights
+        self.weights = [50, 1, -100, -1]
     
     def ponderate(self):
+        if self.win > 0:
+            return MAXINT * self.win
+        if self.lose > 0:
+            return MININT * self.lose
         score = self.weights[0] * self.safety
         score += self.weights[1] * self.possible_safety
         score += self.weights[2] * self.threats
         score += self.weights[3] * self.possible_threats
-        if self.win > 0:
-            score = MAXINT * self.win
-        if self.lose > 0:
-            score = -MAXINT * self.lose
         return score
 
     def __str__(self):
@@ -129,8 +130,8 @@ def evaluate_board(board, my_color, genetic_weights = None):
                 board_score = check_actual(d2_r_data, my_color, board_score)
 
     # print(board_score)
-
     if genetic_weights:
+        # print("DATA: ", board_score.safety, board_score.possible_safety, board_score.threats, board_score.possible_threats, board_score.win, board_score.lose)
         board_score.set_weights(genetic_weights)
         score = board_score.ponderate()
     else:
@@ -259,9 +260,9 @@ def genetic_evaluation(data, color, my_color, board_score):
             score = 2
         elif data.spaces <= 4:
             score = 1
-    elif data.n > 2:
+    elif data.n >= 2:
         if data.spaces <= 2:
-            score = 1
+            score = 1 - 0.5 * data.spaces
     
     if color == my_color:
         if score == 1:
@@ -269,6 +270,7 @@ def genetic_evaluation(data, color, my_color, board_score):
         if score == 2:
             board_score.safety += 1
         if score == MAXINT:
+            # print("WIN")
             board_score.win += 1
     else:
         if score == 1:
@@ -276,5 +278,6 @@ def genetic_evaluation(data, color, my_color, board_score):
         if score == 2:
             board_score.threats += 1
         if score == MAXINT:
+            # print("LOSE")
             board_score.lose += 1
     return board_score
