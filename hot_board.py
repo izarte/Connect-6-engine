@@ -53,7 +53,6 @@ def make_persistant(board, hot_board, true_board, move, p_row, p_col):
                     check = False
                     add_pos.append(0)
 
-                print(move, row, col)
                 hot_board[(row, col)] = [(row, col)]
             
             if board[row][col] == color:
@@ -116,8 +115,8 @@ def get_values(minimum, maximum, row):
 def is_valid_pose(x,y):
     return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
 
-
-def calculate_combination_value(board, combination):
+import copy
+def calculate_combination_value(board, combination, color, maximum):
     directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
 
     if isinstance(combination, StoneMove):
@@ -128,9 +127,14 @@ def calculate_combination_value(board, combination):
         moves = StoneMove(combination)
         moves = moves.positions
     score = 0
+    future_board = copy.deepcopy(board)
+    for move in moves:
+        if future_board[move.x][move.y] == NOSTONE:
+            future_board[move.x][move.y] = color
     for move in moves:
         for direction in directions:
-            count = 0
+            total_count = 1
+            same_count = 1
             add_pos = [-1, 1]
             while len(add_pos) > 0:
                 pos = add_pos[0]
@@ -139,14 +143,90 @@ def calculate_combination_value(board, combination):
                 col = move.y + direction[1] * pos
                 if not is_valid_pose(row, col):
                     continue
-                if board[row][col] != NOSTONE:
-                    count += 1
+                if future_board[row][col] != NOSTONE:
+                    total_count += 1
+                    if future_board[row][col] == color:
+                        same_count += 1
                     if pos > 0:
                         add_pos.append(pos + 1)
                     else:
                         add_pos.append(pos - 1)
-                if count >= 3:
+                # print(row, col, future_board[row][col], count, add_pos)
+                if same_count >= 6:
+                    maximum[0] = MAXINT
                     return MAXINT
-        score += count
+        score += total_count
+    maximum[0] = max(score, maximum[0])
+    return score    
 
-    return score
+
+def update_hot_board(board, bdata):
+    hot_board = {}
+
+    for moves in bdata.remembered_moves['queue']:
+        # bdata.print_remember()
+        # input()
+        for move in moves.positions:
+            if (move.x, move.y) in hot_board:
+                del hot_board[(move.x, move.y)]
+            for row in range(move.x - HOT_IMPACT, move.x + HOT_IMPACT + 1):
+                for col in get_values(move.y - 2, move.y + 2, row - move.x):
+                    if row == move.x and col == move.y:
+                        continue
+                    if not is_valid_pose(row, col):
+                        continue
+                    if board[row][col] != NOSTONE:
+                        if (row, col) in hot_board:
+                            del hot_board[(row, col)]
+                        continue
+                    if not (row, col) in hot_board:
+                        hot_board[(row, col)] = [(move.x, move.y)]
+                    elif not (move.x, move.y) in hot_board[(row, col)]:
+                        hot_board[(row, col)].append((move.x, move.y))
+
+    for move in bdata.true_board:
+        check_persistant(board, hot_board, StonePosition(move[0], move[1]))
+
+    bdata.hot_board = hot_board
+
+
+def update_remember(bdata, moves, make):
+    if make:
+        if not moves in bdata.remembered_moves['queue']:
+            bdata.remembered_moves['queue'].append(moves)
+        if len(bdata.remembered_moves['queue']) > 2:
+            lost_move = bdata.remembered_moves['queue'][0]
+            bdata.remembered_moves['discarded_queue'].append(lost_move)
+            bdata.remembered_moves['queue'] = bdata.remembered_moves['queue'][1:]
+    else:
+        if bdata.remembered_moves['queue'][-1] == moves:
+            bdata.remembered_moves['queue'] = bdata.remembered_moves['queue'][:-1]
+            if bdata.remembered_moves['discarded_queue']:
+                restore_move = bdata.remembered_moves['discarded_queue'][-1]
+                bdata.remembered_moves['queue'] = bdata.remembered_moves['discarded_queue'][-1:] + bdata.remembered_moves['queue']
+                bdata.remembered_moves['discarded_queue'] = bdata.remembered_moves['discarded_queue'][:-1]
+
+
+def check_persistant(board, hot_board, move):
+    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+    color = board[move.x][move.y]
+    for direction in directions:
+        count = 1
+        check_list = [-1, 1]
+        while len(check_list) > 0:
+            pos = check_list[0]
+            check_list = check_list[1:]
+            row = move.x + direction[0] * pos
+            col = move.y + direction[1] * pos
+            if not is_valid_pose(row, col):
+                continue
+            
+            if board[row][col] == color:
+                count += 1
+                if pos > 0:
+                    check_list.append(pos + 1)
+                else:
+                    check_list.append(pos - 1)
+            if count >= 4 and board[row][col] == NOSTONE:
+                hot_board[(row, col)] = [(row, col)]

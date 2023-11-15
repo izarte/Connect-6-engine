@@ -48,15 +48,24 @@ class BoardScore():
         self.weights = weights
         self.weights = [50, 1, -100, -1]
     
-    def ponderate(self):
+    def ponderate(self, t):
         if self.win > 0:
-            return MAXINT * self.win
-        if self.lose > 0:
-            return MININT * self.lose
+            return MAXINT
+        if self.lose > 0 or self.threats:
+            return MININT
         score = self.weights[0] * self.safety
+        if t:
+            print(self.weights[0], ":", score, end=' ')
         score += self.weights[1] * self.possible_safety
+        if t:
+            print(self.weights[1], ":", score, end=' ')
         score += self.weights[2] * self.threats
+        if t:
+            print(self.weights[2], ":", score, end=' ')
         score += self.weights[3] * self.possible_threats
+        if t:
+            print(self.weights[3], ":", score, end=' ')
+            print()
         return score
 
     def __str__(self):
@@ -71,7 +80,7 @@ class BoardScore():
     returns:
         - int: difference between safety and threats
 """
-def evaluate_board(board, my_color, genetic_weights = None):
+def evaluate_board(board, my_color, genetic_weights = None, t=False):
     # Evaluation metrics
     board_score = BoardScore()
 
@@ -131,9 +140,10 @@ def evaluate_board(board, my_color, genetic_weights = None):
 
     # print(board_score)
     if genetic_weights:
-        # print("DATA: ", board_score.safety, board_score.possible_safety, board_score.threats, board_score.possible_threats, board_score.win, board_score.lose)
+        if t:
+            print("DATA: ", board_score.safety, board_score.possible_safety, board_score.threats, board_score.possible_threats, board_score.win, board_score.lose)
         board_score.set_weights(genetic_weights)
-        score = board_score.ponderate()
+        score = board_score.ponderate(t)
     else:
         score = board_score.safety - board_score.threats
 
@@ -262,7 +272,7 @@ def genetic_evaluation(data, color, my_color, board_score):
             score = 1
     elif data.n >= 2:
         if data.spaces <= 2:
-            score = 1 - 0.5 * data.spaces
+            score = 1
     
     if color == my_color:
         if score == 1:

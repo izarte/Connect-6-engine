@@ -2,8 +2,7 @@ import time
 
 
 from defines import *
-from hot_board import make_hot_board, unmake_hot_board, calculate_combination_value
-from calculation_module import evaluate_board
+from hot_board import update_hot_board, update_remember
 # from update_hot_board import update_hot_board
 
 
@@ -15,19 +14,34 @@ def init_board(board):
             board[i][j] = NOSTONE
 
 
-def make_move(board, hot_board: dict, true_board, remembered_moves, move, color, store=True, true_make=True):
+def make_move(board, bdata, move, color, store=True, true_make=True):
     board[move.positions[0].x][move.positions[0].y] = color
     board[move.positions[1].x][move.positions[1].y] = color
     if true_make:
         for m in move.positions:
-            true_board.append((m.x, m.y))
-    make_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves, store=store)
+            bdata.true_board.append((m.x, m.y))
+    if store:
+        update_remember(bdata, move, True)
+    # t = time.perf_counter()
+    update_hot_board(board, bdata)
+    # print(f"T: {time.perf_counter() - t}")
+    # print("TRUE: ", bdata.true_board)
+    # write_hot_board(bdata.hot_board)
+    # print_board(board)
+    # input()
+    # make_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves, store=store)
 
 
-def unmake_move(board, hot_board, true_board, remembered_moves, move):
+def unmake_move(board, bdata, move):
     board[move.positions[0].x][move.positions[0].y] = NOSTONE
     board[move.positions[1].x][move.positions[1].y] = NOSTONE
-    unmake_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves)
+    # for m in move.positions:
+    #     future_moves.remove((m.x, m.y))
+    update_remember(bdata, move, False)
+    # t = time.perf_counter()
+    update_hot_board(board, bdata)
+    # print(f"T: {time.perf_counter() - t}")
+    # unmake_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves)
 
 
 def write_hot_board(hot_board):

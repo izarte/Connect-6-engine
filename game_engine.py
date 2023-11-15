@@ -19,13 +19,11 @@ class GameEngine:
                 print(f"Too long Engine Name: {name}, should be less than: {MSG_LENGTH}")
         self.m_alphabeta_depth = DEPTH
         self.m_board = t = [ [0]*GRID_NUM for i in range(GRID_NUM)]
-        self.hot_board = {}
-        self.true_board = []
-        self.remembered_moves = {'queue': [], 'discarded_queue': []}
+        self.bdata = BData()
         self.init_game()
         self.m_search_engine = SearchEngine()
         self.m_best_move = StoneMove()
-        self.weights = [50, 1, -1, -100]
+        self.weights = [50, 1, -100, -1]
 
     def init_game(self):
         init_board(self.m_board)
@@ -69,31 +67,31 @@ class GameEngine:
                 self.m_vcf = False
             elif msg.startswith("black"):
                 self.m_best_move = msg2move(msg[6:])
-                make_move(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_best_move, BLACK)
+                make_move(self.m_board, self.bdata, self.m_best_move, BLACK)
                 self.m_chess_type = BLACK
-                write_hot_board(self.hot_board)
+                write_hot_board(self.bdata.hot_board)
             elif msg.startswith("white"):
                 self.m_best_move = msg2move(msg[6:])
-                make_move(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_best_move, WHITE)
-                write_hot_board(self.hot_board)
+                make_move(self.m_board, self.bdata, self.m_best_move, WHITE)
+                write_hot_board(self.bdata.hot_board)
                 self.m_chess_type = WHITE
             # THIS IS EXECUTED BY INTERFACE (very true)
             elif msg == "next":
                 # XOR operator to change player turn
                 self.m_chess_type = self.m_chess_type ^ 3
                 self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move)
-                make_move(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_best_move, self.m_chess_type)
+                make_move(self.m_board, self.bdata, self.m_best_move, self.m_chess_type)
+                score = evaluate_board(board=self.m_board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
+                print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")
                 msg = f"move {move2msg(self.m_best_move)}"
                 print(msg)
                 flush_output()
-                score = evaluate_board(board=self.m_board, my_color=self.m_chess_type)
-                my_print(f"Score: {score}", "score.log")
-                write_hot_board(self.hot_board)
+                write_hot_board(self.bdata.hot_board)
             elif msg.startswith("new"):
                 self.init_game()
                 if msg[4:] == "black":
                     self.m_best_move = msg2move("JJ")
-                    make_move(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_best_move, BLACK)
+                    make_move(self.m_board, self.bdata, self.m_best_move, BLACK)
                     self.m_chess_type = BLACK
                     msg = "move JJ"
                     print(msg)
@@ -102,13 +100,13 @@ class GameEngine:
                     self.m_chess_type = WHITE
             elif msg.startswith("move"):
                 self.m_best_move = msg2move(msg[5:])
-                make_move(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_best_move, self.m_chess_type ^ 3)
+                make_move(self.m_board, self.bdata, self.m_best_move, self.m_chess_type ^ 3)
                 if is_win_by_premove(self.m_board, self.m_best_move):
                     print("We lost!")
                     continue
                 self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move)
                 msg = f"move {move2msg(self.m_best_move)}"
-                make_move(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_best_move, self.m_chess_type)
+                make_move(self.m_board, self.bdata, self.m_best_move, self.m_chess_type)
                 print(msg)
                 flush_output()
             elif msg.startswith("depth"):
@@ -136,7 +134,7 @@ class GameEngine:
                     tournament = Tournament(genetic.population)
                     for i in range(iterations):
                         tournament.create_matches(score_requisite=i)
-                        tournament.play_matches(self.m_board, self.hot_board, self.remembered_moves, self.search_a_move)
+                        tournament.play_matches(self.m_board, self.bdata.hot_board, self.remembered_moves, self.search_a_move)
                         # print(tournament.scores)
                     genetic.set_evaluations(tournament.scores)
                     genetic.reproduction()
@@ -159,16 +157,18 @@ class GameEngine:
         if tournament_data:
             self.m_chess_type = tournament_data['color']
             self.m_board = tournament_data['board']
-            self.hot_board = tournament_data['hot_board']
+            self.bdata.hot_board = tournament_data['hot_board']
         
-        self.m_search_engine.update_parameters(self.m_board, self.hot_board, self.true_board, self.remembered_moves, self.m_chess_type, self.m_alphabeta_depth)
+        self.m_search_engine.update_parameters(self.m_board, self.bdata, self.m_chess_type, self.m_alphabeta_depth)
         start = time.perf_counter()
         if not weights:
             weights = self.weights
         bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove, weights)
+        # make_move(self.m_board, self.bdata, self.m_best_move, self.m_chess_type)
+        score = evaluate_board(board=self.m_board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
         # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove, weights)
         end = time.perf_counter()
-        print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")
+        # print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")
         # my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
         # print(f"AB Time:\t{end - start:.3f}")
         # print(f"Node:\t{self.m_search_engine.total_nodes}\n")

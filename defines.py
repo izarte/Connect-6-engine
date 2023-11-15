@@ -15,7 +15,8 @@ MAXINT = 20000
 MININT = -20000
 DEPTH = 3
 
-HOT_IMPACT = 1
+HOT_IMPACT = 2
+MOVEMENTS_MEMORY = 3
 
 
 class StonePosition:
@@ -65,3 +66,18 @@ class AlphaBeta:
     """
     def __bool__(self):
         return self.alpha >= self.beta
+
+
+class BData():
+    def __init__(self):
+        self.hot_board = {}
+        self.true_board = []
+        self.remembered_moves = {'queue': [], 'discarded_queue': []}
+
+    def print_remember(self):
+        for m in self.remembered_moves['queue']:
+            print(m, end=' - ')
+        print("discarded: ", end='')
+        for m in self.remembered_moves['discarded_queue']:
+            print(m, end=' - ')
+        print()

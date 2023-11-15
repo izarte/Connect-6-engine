@@ -8,13 +8,11 @@ import time
 
 
 class TreeNode:
-    def __init__(self, created_move, level, slelection_method_is_max, board, hot_board, true_board, remembered_moves, color, my_color, total_nodes, parent_alpha_beta, weights=None):
+    def __init__(self, created_move, level, slelection_method_is_max, board, bdata, color, my_color, total_nodes, parent_alpha_beta, weights=None):
         self.created_move = created_move
         self.slelection_method_is_max = slelection_method_is_max
         self.board = board
-        self.hot_board = hot_board
-        self.true_board = true_board
-        self.remembered_moves = remembered_moves
+        self.bdata = bdata
         self.color = color
         self.my_color = my_color
         # Dictonary with labels as score and keys as move that creates scored scenario
@@ -30,7 +28,7 @@ class TreeNode:
         Calculates all possible moves and expand tree for each posibility until depth is reached
     """
     def expand_tree(self, last_level = 0):
-        possible_combinations = list(itertools.combinations(self.hot_board, 2))
+        possible_combinations = list(itertools.combinations(self.bdata.hot_board, 2))
         # Check if actual node is a leaf
         if self.is_leaf:
             # self.possible_moves[CalculationModule.calculate()] = None
@@ -38,31 +36,27 @@ class TreeNode:
             sorted_combinations = [] # Don't execute loop 
         else:
             t = time.perf_counter()
+            maximum = [0]
             sorted_combinations = sorted(
                 possible_combinations,
-                key=lambda combination: calculate_combination_value(self.board, combination),
+                key=lambda combination: calculate_combination_value(self.board, combination, self.color, maximum),
                 reverse=True)
-            sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x) > 0, sorted_combinations))
+            sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color, maximum) > maximum[0] // 2, sorted_combinations))
 
+        if self.level == 1 and not self.slelection_method_is_max:
+            print("FIRST: ", sorted_combinations[0], calculate_combination_value(self.board, sorted_combinations[0], self.color, maximum))
 
         for combination in sorted_combinations:
-            # if self.level == 1:
-            # print(self.level)
-            # for rem in self.remembered_moves['queue']:
-            #     print(rem, end=', ')
-            # print('d: ', end='')
-            # for rem in self.remembered_moves['discarded_queue']:
-            #     print(rem, end=', ')
-            # print()
-            # Check min-max condition to stop expanding
+            if combination == ((8, 9), (13, 9)) or combination == ((13, 9), (8, 9)):
+                print("THIS", calculate_combination_value(self.board, combination, self.color,maximum), "c: ", self.color, self.my_color)
             if self.alpha_beta:
                 break
             self.total_nodes += 1
             move = StoneMove(combination)
             # Make move to change actual state
-            make_move(board=self.board, hot_board=self.hot_board, true_board=self.true_board, remembered_moves=self.remembered_moves, move=move, color=self.color, store=self.level != DEPTH - 1, true_make=False)
-            # if is_win_by_premove(self.board, move):
-                # unmake_move(board=self.board, hot_board=self.hot_board, true_board=self.true_board, remembered_moves=self.remembered_moves, move=move)
+            if is_win_by_premove(self.board, move):
+                break
+            make_move(self.board, self.bdata, move, BLACK, self.level != DEPTH - 1, False)
 
             # Create child
             node = TreeNode(
@@ -70,9 +64,7 @@ class TreeNode:
                 level = (self.level + 1),
                 slelection_method_is_max = not self.slelection_method_is_max,
                 board = self.board,
-                hot_board = self.hot_board,
-                true_board = self.true_board,
-                remembered_moves = self.remembered_moves,
+                bdata = self.bdata,
                 color = self.color ^ 3,
                 my_color = self.my_color,
                 total_nodes = self.total_nodes,
@@ -82,8 +74,7 @@ class TreeNode:
 
             score, self.total_nodes = node.expand_tree(last_level)
             # Unmake move to return original state (at this point all childs have been explored)
-            unmake_move(board=self.board, hot_board=self.hot_board, true_board=self.true_board, remembered_moves=self.remembered_moves, move=move)
-            # Only save movements for first node
+            unmake_move(self.board, self.bdata, move)
             self.possible_moves[score] = None
             if self.level == 0:
                 self.possible_moves[score] = move
@@ -101,6 +92,9 @@ class TreeNode:
         best_option = self.get_selection()
         # Return the best move if it is first node
         if self.level == 0:
+            for p in self.possible_moves:
+                print(p, self.possible_moves[p])
+            print(self.slelection_method_is_max, best_option, self.possible_moves[best_option])
             return self.possible_moves[best_option], best_option, self.total_nodes
         # Update parent alpha beta values
         if self.slelection_method_is_max:
@@ -122,8 +116,8 @@ class TreeNode:
     """
     def get_selection(self):
         if self.slelection_method_is_max:
-            return max(self.possible_moves)
-        return min(self.possible_moves)        
+            return max(self.possible_moves) if self.possible_moves else MAXINT
+        return min(self.possible_moves) if self.possible_moves else MININT      
 
     def negaScout(self):
         # print(self.level)
@@ -135,7 +129,7 @@ class TreeNode:
 
         t = time.perf_counter()
         possible_combinations = list(itertools.combinations(self.hot_board, 2))
-        maximum = 0
+        maximum = [0]
         sorted_combinations = sorted(
             possible_combinations,
             key=lambda combination: calculate_combination_value(self.board, self.hot_board, combination, self.color, maximum),
