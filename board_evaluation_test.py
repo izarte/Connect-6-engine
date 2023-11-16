@@ -1,7 +1,5 @@
 from defines import *
 from tools import *
-from calculation_module import evaluate_board
-from hot_board import calculate_combination_value
 
 import time
 
@@ -36,9 +34,9 @@ board[12][9] = WHITE
 
 # board[10][9] = BLACK
 
-print_board(board)
-s = calculate_combination_value(board, ((8,9),(13,9)), WHITE)
-print(s)
+# print_board(board)
+# s = calculate_combination_value(board, ((8,9),(13,9)), WHITE)
+# print(s)
 # start = time.perf_counter()
 # s = evaluate_board(board, BLACK, [50, 1, -100, -1],True)
 # end = time.perf_counter()

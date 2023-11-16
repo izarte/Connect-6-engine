@@ -3,7 +3,6 @@ import time
 
 from defines import *
 from hot_board import update_hot_board, update_remember, calculate_combination_value
-# from update_hot_board import update_hot_board
 
 
 def init_board(board):
@@ -59,17 +58,28 @@ def write_hot_board(hot_board):
             file.write("\n")
         file.write("\n")
 
-def is_win_or_will_be_win(board, move):
-    if calculate_combination_value(board, move, BLACK, None, True) == MAXINT:
+
+from calculation_module import evaluate_board
+def future_score(board, color, my_color, weights, moves):
+    for move in moves.positions:
+        board[move.x][move.y] = color
+    return evaluate_board(board, my_color, weights)
+
+
+def is_win_or_will_be_win(board, move, color):
+    if calculate_combination_value(board, move, color, None, True) == MAXINT:
         return True
-    if calculate_combination_value(board, move, WHITE, None, True) == MAXINT:
-        return True
+    # if calculate_combination_value(board, move, BLACK, None, True) == MAXINT:
+    #     return True
+    # if calculate_combination_value(board, move, WHITE, None, True) == MAXINT:
+    #     return True
     return False
 
 
+import numpy as np
 def is_win_by_premove(board, preMove):
 
-    directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
+    directions = np.array([(1, 0), (0, 1), (1, 1), (1, -1)])
 
     for direction in directions:
         for i in range(len(preMove.positions)):
