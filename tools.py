@@ -2,7 +2,7 @@ import time
 
 
 from defines import *
-from hot_board import update_hot_board, update_remember
+from hot_board import update_hot_board, update_remember, calculate_combination_value
 # from update_hot_board import update_hot_board
 
 
@@ -59,8 +59,16 @@ def write_hot_board(hot_board):
             file.write("\n")
         file.write("\n")
 
+def is_win_or_will_be_win(board, move):
+    if calculate_combination_value(board, move, BLACK, None, True) == MAXINT:
+        return True
+    if calculate_combination_value(board, move, WHITE, None, True) == MAXINT:
+        return True
+    return False
+
 
 def is_win_by_premove(board, preMove):
+
     directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
 
     for direction in directions:

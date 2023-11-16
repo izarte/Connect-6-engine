@@ -165,7 +165,7 @@ class GameEngine:
             weights = self.weights
         bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove, weights)
         # make_move(self.m_board, self.bdata, self.m_best_move, self.m_chess_type)
-        score = evaluate_board(board=self.m_board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
+        # score = evaluate_board(board=self.m_board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
         # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove, weights)
         end = time.perf_counter()
         # print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")

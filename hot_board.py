@@ -1,4 +1,6 @@
 from defines import *
+from calculation_module import evaluate_board
+
 
 def make_hot_board(hot_board: dict, board, true_board, remembered_moves, moves: StoneMove, store):
     if store and not moves in remembered_moves['queue']:
@@ -36,6 +38,7 @@ def make_persistant(board, hot_board, true_board, move, p_row, p_col):
     if not (move.x, move.y) in true_board:
         return
     color = board[move.x][move.y]
+    last = color
     for direction in directions:
         count = 0
         add_pos = [-1, 1]
@@ -52,17 +55,22 @@ def make_persistant(board, hot_board, true_board, move, p_row, p_col):
                 if check:
                     check = False
                     add_pos.append(0)
-
                 hot_board[(row, col)] = [(row, col)]
             
-            if board[row][col] == color:
+            if board[row][col] == color or (board[row][col] == NOSTONE and count >= 3 and last != NOSTONE):
                 count += 1
                 if pos > 0:
-                    add_pos.append(pos + 1)
+                    for i in [1, 2]:
+                        if not pos + i in add_pos:
+                            add_pos.append(pos + i)
                 else:
-                    add_pos.append(pos - 1)
+                    # add_pos.append(pos - 1)
+                    for i in [-1, -2]:
+                        if not pos + i in add_pos:
+                            add_pos.append(pos + i)
             elif board[row][col] != NOSTONE:
                 continue
+            last = board[row][col]
 
 
 
@@ -115,8 +123,30 @@ def get_values(minimum, maximum, row):
 def is_valid_pose(x,y):
     return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
 
-import copy
-def calculate_combination_value(board, combination, color, maximum):
+import copy, time
+def calculate_combination_value(board, combination, color, maximum=None, first=True):
+    t = time.perf_counter()
+    
+    b = copy.deepcopy(board)
+    print("COPY: ", time.perf_counter() - t)
+    t = time.perf_counter()
+    if isinstance(combination, StoneMove):
+        moves = combination.positions
+    elif isinstance(combination, StonePosition):
+        moves = [combination]
+    else:
+        moves = StoneMove(combination)
+        moves = moves.positions
+    for move in moves:
+        b[move.x][move.y] = color
+    print("PRE: ", time.perf_counter() - t)
+    score = abs(evaluate_board(b, color, [50, 1, -100, 1]))
+    if maximum != None:
+        maximum[0] = max(score, maximum[0])
+    return score
+
+
+
     directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
 
     if isinstance(combination, StoneMove):
@@ -132,6 +162,7 @@ def calculate_combination_value(board, combination, color, maximum):
         if future_board[move.x][move.y] == NOSTONE:
             future_board[move.x][move.y] = color
     for move in moves:
+        color = board[move.x][move.y]
         for direction in directions:
             total_count = 1
             same_count = 1
@@ -152,11 +183,17 @@ def calculate_combination_value(board, combination, color, maximum):
                     else:
                         add_pos.append(pos - 1)
                 # print(row, col, future_board[row][col], count, add_pos)
-                if same_count >= 6:
-                    maximum[0] = MAXINT
+                c = 2 if not first else 0
+                if same_count >= 6 - c:
+                    if maximum != None:
+                        maximum[0] = MAXINT
                     return MAXINT
         score += total_count
-    maximum[0] = max(score, maximum[0])
+    if first and calculate_combination_value(board, combination, color ^ 3, maximum, False) == MAXINT:
+        print("OTHER COLOR")
+        return MAXINT
+    if maximum != None:
+        maximum[0] = max(score, maximum[0])
     return score    
 
 
