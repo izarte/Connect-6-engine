@@ -16,7 +16,7 @@ MININT = -20000
 DEPTH = 3
 
 HOT_IMPACT = 2
-MOVEMENTS_MEMORY = 3
+MOVEMENTS_MEMORY = 2
 
 
 class StonePosition:
@@ -67,7 +67,16 @@ class AlphaBeta:
     def __bool__(self):
         return self.alpha >= self.beta
 
-
+"""
+    Class to store data
+    values:
+        - hot_board: dict with interesting positions for next search
+        - true_board: list with positions made by any of player
+        - remembered_mmoves: dict to store move that algorithm will remember
+            * queue: list to imitate queue (FIFO) to store movements to remember
+            * discarded_queue: list to imitate stack (LIFO) to store 
+                forgotten movements to restore when needed
+"""
 class BData():
     def __init__(self):
         self.hot_board = {}
