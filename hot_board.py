@@ -115,90 +115,114 @@ def get_values(minimum, maximum, row):
         - board: current stone layout
         - combination:
         - color: WHITE or BLACK define
+        - score_chess: dictionary with keys as point coorinates and value as score for each direaction for each color
         - maximum: list with one int to modify its value inside function
     returns:
         - score: int with combination rating
 """
-from calculation_module import evaluate_board
 def calculate_combination_value(
         board: np.array,
         combination,
         color: int,
+        score_chess: dict,
         maximum: list = None):
-
-    # moves = StoneMove(combination)
-    # moves = moves.positions
-
-    # future_board = np.copy(board)
-    # for move in moves:
-    #     if future_board[move.x][move.y] == NOSTONE:
-    #         future_board[move.x][move.y] = color
-    # return evaluate_board(future_board, color)
-
-    # define all directions to search
-    directions = np.array([(0, 1), (1, 0), (1, 1), (1, -1)])
-
-    moves = StoneMove(combination)
-    moves = moves.positions
-    score = 0
+    # Get direction influence between stones
+    direction = check_influence(combination)
+    # If no there is no influence, return sum of individual scores
+    if direction == 0:
+        return score_chess[tuple(combination[0])]['total'] + score_chess[tuple(combination[1])]['total']
     future_board = np.copy(board)
+
+    moves = StoneMove(combination).positions
     # Create move in a copy of board
+    score = 0
+    # Create moves in board and get scores of the rest of directions
     for move in moves:
         if future_board[move.x][move.y] == NOSTONE:
             future_board[move.x][move.y] = color
-    # iterate over each stone position
-    for move in moves:
-        # Get color of move
-        color = future_board[move.x][move.y]
-        # Itereate over all directions
-        for direction in directions:
-            last = color
-            # Start counting for each color starting if color is same
-            black_count = BLACK == color
-            white_count = WHITE == color
-            # Increment array to check all interesing positions
-            add_pos = np.array([-1, 1])
-            while len(add_pos) > 0:
-                # Get first element, queue behavior
-                pos = add_pos[0]
-                add_pos = np.delete(add_pos, 0)
-                # Calculate current cordinates
-                row = move.x + direction[0] * pos
-                col = move.y + direction[1] * pos
-                # Pass outlimits positions
-                if not is_valid_pose(row, col):
-                    continue
-                # If there is any stone
-                if future_board[row][col] != NOSTONE:
-                    # Increase the corresponding counter
-                    if future_board[row][col] == WHITE:
-                        white_count += 1
-                    else:
-                        black_count += 1
-                    if last != color:
-                        continue
-                    # Check next position in same direction and sign
-                    if pos > 0:
-                        add_pos = np.append(add_pos, pos + 1)
-                    else:
-                        add_pos = np.append(add_pos, pos - 1)
-                # If any color reach 6 or 4 if it's opponent color, return maximum value
-                if black_count >= 6 - (0 if BLACK == color else 2):
-                    if maximum != None:
-                        maximum[0] = MAXINT
-                    return MAXINT
-                if white_count >= 6 - (0 if WHITE == color else 2):
-                    if maximum != None:
-                        maximum[0] = MAXINT
-                    return MAXINT
-        # Add rating
-        score += white_count + black_count
-    # score = evaluate_board(board,)
-    # Update maximum value
+        score += sum(
+            [score_chess[(move.x, move.y)][v][BLACK] + score_chess[(move.x, move.y)][v][WHITE] if v != direction
+            else 0
+            for v in [(0, 1), (1, 0), (1, 1), (1, -1)]]
+        )
+    last = color
+    # Start counting for each color starting if color is same
+    black_count = BLACK == color
+    white_count = WHITE == color
+    # Increment array to check all interesing positions
+    add_pos = np.array([-1, 1])
+    while len(add_pos) > 0:
+        # Get first element, queue behavior
+        pos = add_pos[0]
+        add_pos = np.delete(add_pos, 0)
+        # Calculate current cordinates
+        row = move.x + direction[0] * pos
+        col = move.y + direction[1] * pos
+        # Pass outlimits positions
+        if not is_valid_pose(row, col):
+            continue
+        # If there is any stone
+        if future_board[row][col] != NOSTONE:
+            # Increase the corresponding counter
+            if future_board[row][col] == WHITE:
+                white_count += 1
+            else:
+                black_count += 1
+            if last != color:
+                continue
+            # Check next position in same direction and sign
+            if pos > 0:
+                add_pos = np.append(add_pos, pos + 1)
+            else:
+                add_pos = np.append(add_pos, pos - 1)
+        # If any color reach 6 or 4 if it's opponent color, return maximum value
+        if black_count >= 6 - (0 if BLACK == color else 2):
+            if maximum != None:
+                maximum[0] = MAXINT
+            return MAXINT
+        if white_count >= 6 - (0 if WHITE == color else 2):
+            if maximum != None:
+                maximum[0] = MAXINT
+            return MAXINT
+    # Add rating
+    score += white_count + black_count
     if maximum != None:
         maximum[0] = max(score, maximum[0])
-    # print(score)
     return score
+
+"""
+    Function to check if 2 positions are aligned in any relevant direction
+    params:
+        - combination: tuple of tuples with both points coridnates ((x1, y1), (x2, y2))
+    returns:
+        - tuple with direction influence
+        - 0, no influence
+"""
+def check_influence(combination: tuple):
+    # Get all cordinates to simplify code
+    x1 = combination[0][0]
+    y1 = combination[0][1]
+    x2 = combination[1][0]
+    y2 = combination[1][1]
+    # Get vector between points
+    vx = x2 - x1
+    vy = y2 - y1
+    # Same x value is horizontal direction
+    if x1 == x2:
+        return (0,1)
+    # Same y value is vertical direction
+    elif y1 == y2:
+        return (1, 0)
+    # Same vector components is diagonal (D1) direction
+    elif vx == vy:
+        return (1, 1)
+    # Same module of the vector components is diagonal (D2) direction
+    elif vx == -vy:
+        return (1, -1)
+    # No influence between points
+    else:
+        return 0
+
 
 
 """

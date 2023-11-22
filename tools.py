@@ -16,7 +16,7 @@ def init_board():
 
 # Point (x, y) if in the valid position of the board.
 def is_valid_pose(x,y):
-    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
+    return x > 1 and x < GRID_NUM - 2 and y > 1 and y < GRID_NUM - 2
 
 
 def make_move(board, bdata, move, color, store=True, true_make=True):
@@ -240,3 +240,58 @@ def my_print(msg, name):
         ptr = ptr[:-1]
         f.write(f"[{ptr}] - {msg}\n")
     f.close()
+
+"""
+    Function to calculate score for one position
+    Score is evaluated by the number of stones connected for each direction.
+    Score will be MAXINT if same color reach 6 connected or opponenct color reaches 4 (next move could be lost)
+    params:
+        - board: list with current stones layout
+        - move: tuple (x, y) with position to evaluate
+        - color: WHITE or BLACK current player
+"""
+def calculate_single_score(board: np.array, move: tuple, color: int):
+    # All directions to check
+    directions = np.array([(0, 1), (1, 0), (1, 1), (1, -1)])
+    # Dictionary to store scores
+    d = {
+        'total': 0,
+        (0, 1): {WHITE: 0, BLACK: 0},
+        (1, 0): {WHITE: 0, BLACK: 0},
+        (1, 1): {WHITE: 0, BLACK: 0},
+        (1, -1): {WHITE: 0, BLACK: 0}
+    }
+    # Iterate over all directions
+    for direction in directions:
+        direction = tuple(direction)
+        # Increment array to check all interesing positions
+        add_pos = np.array([-1, 1])
+        # Same color starts with count 1, itself
+        d[direction][color] = 1
+        while len(add_pos) > 0:
+            # Get first element, queue behavior
+            pos = add_pos[0]
+            add_pos = np.delete(add_pos, 0)
+            # Calculate current cordinates
+            row = move[0] + direction[0] * pos
+            col = move[1] + direction[1] * pos
+            # Pass outlimits positions
+            if not is_valid_pose(row, col):
+                continue
+            # If there is any stone
+            current_color = board[row][col]
+            if current_color != NOSTONE:
+                # Increase the corresponding counter
+                d[direction][current_color] += 1
+                # Check next position in same direction and sign
+                if pos > 0:
+                    add_pos = np.append(add_pos, pos + 1)
+                else:
+                    add_pos = np.append(add_pos, pos - 1)
+                # Check win or opponent win to increase rating
+                if d[direction][current_color] >= 6 - (0 if current_color == color else 2):
+                    d[direction][current_color] = MAXINT
+        # Add total count
+        d['total'] += d[direction][WHITE] + d[direction][BLACK]
+
+    return d

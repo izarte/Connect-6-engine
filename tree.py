@@ -6,7 +6,7 @@ import numpy as np
 from defines import *
 from calculation_module import evaluate_board
 from hot_board import calculate_combination_value
-from tools import make_move, unmake_move, is_win, future_score
+from tools import make_move, unmake_move, is_win, future_score, calculate_single_score
 from hot_board import update_hot_board
 
 
@@ -44,15 +44,16 @@ class TreeNode:
         else:
             update_hot_board(self.board, self.bdata)
             # t = time.perf_counter()
+            score_chess = {tuple(chess): calculate_single_score(self.board, chess, self.color) for chess in self.bdata.hot_board}
             possible_combinations = list(itertools.combinations(self.bdata.hot_board, 2))
             maximum = [0]
             # t1 = time.perf_counter()
             sorted_combinations = sorted(
                 possible_combinations,
-                key=lambda combination: calculate_combination_value(self.board, combination, self.color, maximum),
+                key=lambda combination: calculate_combination_value(self.board, combination, self.color, score_chess, maximum),
                 reverse=True)
             # t2 = time.perf_counter()
-            sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color) > maximum[0] // 2, sorted_combinations))
+            sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color, score_chess) > maximum[0] // 2, sorted_combinations))
             sorted_combinations = sorted_combinations[:20]
             # print(f"COMBINATION: {t1 - t} SORTING: {t2 - t1} FILTER {time.perf_counter() - t2}")
 
