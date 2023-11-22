@@ -1,4 +1,4 @@
-from collections import deque
+import numpy as np
 
 GRID_NUM = 21               # Number of the board, 19*19 plus edges.
 GRID_COUNT = 361            # Sum of the points in the board.
@@ -41,6 +41,9 @@ class StoneMove:
 
         self.positions = [first_move, second_move]
         self.score = 0
+    
+    def combination(self):
+        return ((self.positions[0].x, self.positions[0].y), (self.positions[1].x, self.positions[1].y))
 
     # Function to print StoneMove data
     def __str__(self):
@@ -49,11 +52,19 @@ class StoneMove:
 
 
 # One point and its value.
-class Chess:
-    def __init__(self, x, y, score):
-        self.x = x
-        self.y = y
+class CombinationScore:
+    def __init__(self, vals, score):
+        self.x1 = vals[0][0]
+        self.y1 = vals[1][0]
+        self.x2 = vals[0][1]
+        self.y2 = vals[1][1]
         self.score = score
+    
+    def values(self):
+        return ((self.x1, self.y1), (self.x2, self.y2))
+    
+    def __str__(self):
+        return f"{self.x1} {self.y1} - {self.x2} {self.y2} {self.score}"
 
 
 class AlphaBeta:
@@ -79,7 +90,7 @@ class AlphaBeta:
 """
 class BData():
     def __init__(self):
-        self.hot_board = {}
+        self.hot_board = []
         self.true_board = []
         self.remembered_moves = {'queue': [], 'discarded_queue': []}
 

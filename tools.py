@@ -5,12 +5,18 @@ from defines import *
 from hot_board import update_hot_board, update_remember, calculate_combination_value
 
 
-def init_board(board):
-    for i in range(21):
-        board[i][0] = board[0][i] = board[i][GRID_NUM - 1] = board[GRID_NUM - 1][i] = BORDER
-    for i in range(1, GRID_NUM - 1):
-        for j in range(1, GRID_NUM - 1):
-            board[i][j] = NOSTONE
+def init_board():
+    board = np.zeros((GRID_NUM, GRID_NUM), dtype=int)
+    # Set borders to BORDER
+    board[0][:] = board[:][0] = board[-1][:] = board[:][-1] = BORDER
+    
+    # Set inner grid to NOSTONE
+    board[1:-1][1:-1] = NOSTONE
+    return board
+
+# Point (x, y) if in the valid position of the board.
+def is_valid_pose(x,y):
+    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
 
 
 def make_move(board, bdata, move, color, store=True, true_make=True):
@@ -21,31 +27,23 @@ def make_move(board, bdata, move, color, store=True, true_make=True):
             bdata.true_board.append((m.x, m.y))
     if store:
         update_remember(bdata, move, True)
-    # t = time.perf_counter()
-    update_hot_board(board, bdata)
-    # print(f"T: {time.perf_counter() - t}")
-    # print("TRUE: ", bdata.true_board)
-    # write_hot_board(bdata.hot_board)
-    # print_board(board)
-    # input()
-    # make_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves, store=store)
+    # update_hot_board(board, bdata)
 
 
 def unmake_move(board, bdata, move):
     board[move.positions[0].x][move.positions[0].y] = NOSTONE
     board[move.positions[1].x][move.positions[1].y] = NOSTONE
-    # for m in move.positions:
-    #     future_moves.remove((m.x, m.y))
     update_remember(bdata, move, False)
-    # t = time.perf_counter()
-    update_hot_board(board, bdata)
-    # print(f"T: {time.perf_counter() - t}")
-    # unmake_hot_board(hot_board=hot_board, board=board, true_board=true_board, moves=move, remembered_moves=remembered_moves)
+    # update_hot_board(board, bdata)
 
 
 def write_hot_board(hot_board):
-    board = [ [0]*(GRID_NUM) for i in range(GRID_NUM)]
-    init_board(board)
+    board = [ [0]*(GRID_NUM) for i in range((GRID_NUM))]
+    for i in range(21):
+        board[i][0] = board[0][i] = board[i][GRID_NUM - 1] = board[GRID_NUM - 1][i] = BORDER
+    for i in range(1, GRID_NUM - 1):
+        for j in range(1, GRID_NUM - 1):
+            board[i][j] = NOSTONE
     for position in hot_board:
         board[position[1]][GRID_NUM - 1 -position[0]] = 'X'
     with open("hot_board.txt", "w") as file:
@@ -53,8 +51,8 @@ def write_hot_board(hot_board):
             file.write(' '.join(map(str, row)) + '\n')
         for move in hot_board:
             file.write(str(move)+':')
-            for m in hot_board[move]:
-                file.write(' ' + str(m))
+            # for m in hot_board[move]:
+            #     file.write(' ' + str(m))
             file.write("\n")
         file.write("\n")
 
@@ -66,13 +64,33 @@ def future_score(board, color, my_color, weights, moves):
     return evaluate_board(board, my_color, weights)
 
 
-def is_win_or_will_be_win(board, move, color):
-    if calculate_combination_value(board, move, color, None, True) == MAXINT:
+def is_win(board, moves, color):
+    directions = np.array([(0, 1), (1, 0), (1, 1), (1, -1)])
+    for move in moves.positions:
+       for direction in directions:
+           count = 1
+           add_pos = np.array([-1, 1])
+           while len(add_pos) > 0:
+                pos = add_pos[0]
+                add_pos = np.delete(add_pos, 0)
+                # Calculate current cordinates
+                row = move.x + direction[0] * pos
+                col = move.y + direction[1] * pos
+                if not is_valid_pose(row, col):
+                    continue
+                if board[row][col] == color:
+                    count += 1
+                    if pos > 0:
+                        add_pos = np.append(add_pos, pos + 1)
+                    else:
+                        add_pos = np.append(add_pos, pos - 1)
+                
+                if count >= 6:
+                    return True
+    return False
+
+    if calculate_combination_value(board, move.combination(), color, None) == MAXINT:
         return True
-    # if calculate_combination_value(board, move, BLACK, None, True) == MAXINT:
-    #     return True
-    # if calculate_combination_value(board, move, WHITE, None, True) == MAXINT:
-    #     return True
     return False
 
 
@@ -87,6 +105,8 @@ def is_win_by_premove(board, preMove):
             position = preMove.positions[i]
             n = x = position.x
             m = y = position.y
+            if not is_valid_pose(n, m):
+                continue
             actual_move = board[n][m]
             
             if (actual_move == BORDER or actual_move == NOSTONE):
@@ -96,8 +116,8 @@ def is_win_by_premove(board, preMove):
                 x += direction[0]
                 y += direction[1]
                 count += 1
-            x = n - direction[0]
-            y = m - direction[1]
+            x = n - direction[0] * count
+            y = m - direction[1] * count
             while board[x][y] == actual_move:
                 x -= direction[0]
                 y -= direction[1]
@@ -108,10 +128,10 @@ def is_win_by_premove(board, preMove):
 
 
 def check_full(board):
-    for row in board:
-        if 0 in row:
-            return False
-    return True
+    if not np.all(board != 0):
+        return False
+    else:
+        return True
 
 
 def get_msg(max_len):

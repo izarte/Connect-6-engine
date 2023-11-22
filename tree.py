@@ -1,12 +1,12 @@
 import itertools
 import time
 import copy
-
+import numpy as np
 
 from defines import *
 from calculation_module import evaluate_board
 from hot_board import calculate_combination_value
-from tools import make_move, unmake_move, is_win_by_premove, future_score
+from tools import make_move, unmake_move, is_win, future_score
 from hot_board import update_hot_board
 
 
@@ -39,18 +39,24 @@ class TreeNode:
     def expand_tree(self, last_level = 0):
         # Check if actual node is a leaf
         if self.is_leaf:
-            self.possible_moves[evaluate_board(self.board, self.my_color, self.weights)] = None
+            self.possible_moves[evaluate_board(self.board, self.my_color, self.created_move, self.weights)] = None
             sorted_combinations = [] # Don't execute loop 
         else:
             update_hot_board(self.board, self.bdata)
+            # t = time.perf_counter()
             possible_combinations = list(itertools.combinations(self.bdata.hot_board, 2))
             maximum = [0]
-            t = time.perf_counter()
+            # t1 = time.perf_counter()
             sorted_combinations = sorted(
                 possible_combinations,
-                key=lambda combination: calculate_combination_value(self.board, combination, self.color, maximum, True),
+                key=lambda combination: calculate_combination_value(self.board, combination, self.color, maximum),
                 reverse=True)
-            sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color, maximum, True) > maximum[0] // 2, sorted_combinations))
+            # t2 = time.perf_counter()
+            sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color) > maximum[0] // 2, sorted_combinations))
+            sorted_combinations = sorted_combinations[:20]
+            # print(f"COMBINATION: {t1 - t} SORTING: {t2 - t1} FILTER {time.perf_counter() - t2}")
+
+            # print(len(sorted_combinations))
 
         for combination in sorted_combinations:
             if self.alpha_beta:
@@ -60,8 +66,8 @@ class TreeNode:
             expand = True
             # Make move to change actual state
             make_move(self.board, self.bdata, move, self.color, self.level != DEPTH - 1, False)
-            if is_win_by_premove(self.board, move):
-                score = future_score(copy.deepcopy(self.board), self.color, self.my_color, self.weights, move)
+            if is_win(self.board, move, self.color):
+                score = evaluate_board(self.board, self.my_color, move, self.weights)
                 expand = False
                 unmake_move(self.board, self.bdata, move)
 
@@ -83,10 +89,10 @@ class TreeNode:
                 score, self.total_nodes = node.expand_tree(last_level)
                 # Unmake move to return original state (at this point all childs have been explored)
                 unmake_move(self.board, self.bdata, move)
+
             self.possible_moves[score] = None
             if self.level == 0:
                 self.possible_moves[score] = move
-            
 
             if self.slelection_method_is_max:
             # If is max turn
@@ -134,20 +140,22 @@ class TreeNode:
 
     def negaScout(self):
         if self.is_leaf:
-            t = time.perf_counter()
-            v = evaluate_board(self.board, self.my_color, self.weights)
+            # t = time.perf_counter()
+            v = evaluate_board(self.board, self.my_color, self.created_move, self.weights)
             # my_print(f"EVALUTAION {time.perf_counter() - t}", "puta.txt")
             return v, self.total_nodes
 
         t = time.perf_counter()
         possible_combinations = list(itertools.combinations(self.bdata.hot_board, 2))
         maximum = [0]
+        # t1 = time.perf_counter()
         sorted_combinations = sorted(
             possible_combinations,
             key=lambda combination: calculate_combination_value(self.board, combination, self.color, maximum),
             reverse=True)
-        sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color, maximum) > maximum[0] // 2, sorted_combinations))
-
+        # t2 = time.perf_counter()
+        sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color) > maximum[0] // 2, sorted_combinations))
+        sorted_combinations = sorted_combinations[:20]
         # my_print(f"COMBINATION {time.perf_counter() - t}", "puta.txt")
         # print(len(sorted_combinations))
         # sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, self.hot_board, x, self.color, 0) > maximum // 2, sorted_combinations))
@@ -160,19 +168,20 @@ class TreeNode:
             # my_print(f"{self.level} {combination}", "puta.txt")
             self.total_nodes += 1
             move = StoneMove(combination)
-            make_move(self.board, self.bdata, move, BLACK, self.level != DEPTH - 1, False)
+            make_move(self.board, self.bdata, move, self.color, self.level != DEPTH - 1, False)
+
             
             alpha_beta = AlphaBeta(alpha=-b, beta=-a)
             node = TreeNode(
-                created_move=move,
-                level=(self.level + 1),
+                created_move = move,
+                level = (self.level + 1),
                 slelection_method_is_max = not self.slelection_method_is_max,
-                board=self.board,
+                board = self.board,
                 bdata = self.bdata,
-                color=self.color ^ 3,
-                my_color=self.my_color,
-                total_nodes=self.total_nodes,
-                parent_alpha_beta=alpha_beta,
+                color = self.color ^ 3,
+                my_color = self.my_color,
+                total_nodes = self.total_nodes,
+                parent_alpha_beta = alpha_beta,
                 weights=self.weights
             )
 
@@ -183,6 +192,7 @@ class TreeNode:
                 a, self.total_nodes = node.negaScout()
                 a = -a
             unmake_move(self.board, self.bdata, move)
+
             a = max(a, score)
             if a == score:
                 best_move = move

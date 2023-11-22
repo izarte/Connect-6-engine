@@ -43,10 +43,14 @@ class BoardScore():
         self.weights = []
         self.win = 0
         self.lose = 0
+        self.same = 0
+        self.opponent = 0
+        self.my_frees = 0
+        self.opponent_frees = 0
     
     def set_weights(self, weights):
         self.weights = weights
-        self.weights = [50, 1, -100, -1]
+        # self.weights = [50, 15, -100, -10]
     
     def ponderate(self, t):
         if self.win > 0:
@@ -66,6 +70,10 @@ class BoardScore():
         if t:
             print(self.weights[3], ":", score, end=' ')
             print()
+        score += self.weights[4] * self.same
+        score += self.weights[5] * self.opponent
+        score += self.weights[6] * self.my_frees
+        score += self.weights[7] * self.opponent_frees
         return score
 
     def __str__(self):
@@ -80,7 +88,7 @@ class BoardScore():
     returns:
         - int: difference between safety and threats
 """
-def evaluate_board(board, my_color, genetic_weights = None, t=False):
+def evaluate_board(board, my_color, moves, genetic_weights = None, t=False):
     # Evaluation metrics
     board_score = BoardScore()
 
@@ -137,6 +145,12 @@ def evaluate_board(board, my_color, genetic_weights = None, t=False):
                 # Calculate above principal diagonal for both directions
                 board_score = check_actual(d1_r_data, my_color, board_score)
                 board_score = check_actual(d2_r_data, my_color, board_score)
+
+    for move in moves.positions:
+        window = board[move.x - 1: move.x + 2, move.y - 1: move.y + 2]
+        same_color = (WHITE == my_color)
+        board_score.same += np.count_nonzero(window == (same_color + 1))
+        board_score.opponent += np.count_nonzero(window == ((not same_color) + 1))
 
     # print(board_score)
     if genetic_weights:
@@ -275,6 +289,8 @@ def genetic_evaluation(data, color, my_color, board_score):
             score = 1
     
     if color == my_color:
+        if score > 0:
+            board_score.my_frees += (free_left + free_right)
         if score == 1:
             board_score.possible_safety += 1
         if score == 2:
@@ -283,6 +299,8 @@ def genetic_evaluation(data, color, my_color, board_score):
             # print("WIN")
             board_score.win += 1
     else:
+        if score > 0:
+            board_score.opponent_frees += (free_left + free_right)
         if score == 1:
             board_score.possible_threats += 1
         if score == 2:

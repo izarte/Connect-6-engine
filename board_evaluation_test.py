@@ -3,9 +3,8 @@ from tools import *
 
 import time
 
-board = [ [0]*GRID_NUM for i in range(GRID_NUM)]
-hot_board = {}
-init_board(board)
+board = init_board()
+bdata = BData()
 
 # board[10][10] = BLACK
 # board[4][1] = BLACK
@@ -16,17 +15,17 @@ init_board(board)
 
 # board[8][10]= BLACK
 board[9][10]= BLACK
-board[10][10] = BLACK
-board[12][10] = BLACK
-board[9][9] = WHITE
-board[10][9] = WHITE
-board[11][9] = WHITE
-board[12][9] = WHITE
+board[10][11] = BLACK
+board[11][12] = BLACK
+# board[9][9] = WHITE
+# board[10][9] = WHITE
+# board[11][9] = WHITE
+# board[12][9] = WHITE
 
 # board[8][7] = WHITE
 # board[8][9] = WHITE
-# move = StoneMove(((4, 4), (3, 3)))
-# make_move(board, hot_board, move, BLACK)
+move = StoneMove(((8, 15), (1, 1)))
+make_move(board, bdata, move, BLACK)
 # board[4][4] = WHITE
 # board[3][3] = WHITE
 
@@ -34,13 +33,13 @@ board[12][9] = WHITE
 
 # board[10][9] = BLACK
 
-# print_board(board)
+print_board(board)
 # s = calculate_combination_value(board, ((8,9),(13,9)), WHITE)
 # print(s)
 # start = time.perf_counter()
-# s = evaluate_board(board, BLACK, [50, 1, -100, -1],True)
+s = evaluate_board(board, BLACK, move, genetic_weights=[50, 1, -100, -1, 2, 1, 1, -1])
 # end = time.perf_counter()
-# print(f"Score: {s}")
+print(f"Score: {s}")
 # print(f"Time: {end - start}")
 
 # hot_board = {}

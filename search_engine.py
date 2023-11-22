@@ -21,13 +21,13 @@ class SearchEngine():
     def alpha_beta_search(self, our_colour, preMove, weights):
     
         best_move = StoneMove()
-        if (is_win_by_premove(self.board, preMove)):
-            if (our_colour == self.chess_type):
-                #Opponent wins.
-                return None, 0
-            else:
-                #Self wins.
-                return None, MININT + 1
+        # if (is_win(self.board, preMove, self.chess_type)):
+        #     if (our_colour == self.chess_type):
+        #         #Opponent wins.
+        #         return None, 0
+        #     else:
+        #         #Self wins.
+        #         return None, MININT + 1
         
         if(self.check_first_move()):
             best_move.positions[0].x = 10
@@ -37,8 +37,9 @@ class SearchEngine():
 
             return best_move, MAXINT, 1
         
+        # Create alpha beta object
         alpha_beta = AlphaBeta()
-
+        # Create first node to expand
         tree = TreeNode(
             created_move = None,
             level = 0,
@@ -53,7 +54,6 @@ class SearchEngine():
             )
         
         best_move, score, nodes = tree.expand_tree()
-        # best_move = self.find_possible_move()
         return best_move, score, nodes
 
 

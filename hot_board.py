@@ -1,6 +1,7 @@
 from defines import *
 import numpy as np
 
+
 """
     Function to update hot board data. Create a dictionary with just interesing positions
     Params:
@@ -11,14 +12,14 @@ import numpy as np
 """
 def update_hot_board(board: np.array, bdata: BData):
     # Reset dictionary
-    hot_board = {}
+    hot_board = []
     # Iterate over all remembered movements
     for moves in bdata.remembered_moves['queue']:
         # Each movement is composed by 2 stone positions
         for move in moves.positions:
             # Delete current position in hot board as it cannot be a possible move
             if (move.x, move.y) in hot_board:
-                del hot_board[(move.x, move.y)]
+                hot_board.remove((move.x, move.y))
             # Go through all postions that could be imapcted by current move
             """
                 *  *  *
@@ -39,19 +40,18 @@ def update_hot_board(board: np.array, bdata: BData):
                     if board[row][col] != NOSTONE:
                         # And is present in hot_board, delete
                         if (row, col) in hot_board:
-                            del hot_board[(row, col)]
+                            hot_board.remove((row, col))
                         continue
                     # Create position 
                     if not (row, col) in hot_board:
-                        hot_board[(row, col)] = [(move.x, move.y)]
-                    elif not (move.x, move.y) in hot_board[(row, col)]:
-                        hot_board[(row, col)].append((move.x, move.y))
+                        hot_board.append((row, col))
     # For each move in true board
     for move in bdata.true_board:
         # Check if there is any crucial move to not forget it
         check_persistant(board, hot_board, StonePosition(move[0], move[1]))
 
-    bdata.hot_board = hot_board
+    bdata.hot_board = np.array(hot_board)
+
 
 """
     Function to update lists for remembered moves and stored moves
@@ -86,6 +86,12 @@ def update_remember(bdata: BData, moves: StoneMove, make: bool):
                 bdata.remembered_moves['queue'] = bdata.remembered_moves['discarded_queue'][-1:] + bdata.remembered_moves['queue']
                 bdata.remembered_moves['discarded_queue'] = bdata.remembered_moves['discarded_queue'][:-1]
 
+
+# Point (x, y) if in the valid position of the board.
+def is_valid_pose(x,y):
+    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
+
+
 """
     Function to create column iterable list based on row to create gemoetric influence
     *  *  *
@@ -103,10 +109,6 @@ def get_values(minimum, maximum, row):
         return range(minimum, maximum + 1)
 
 
-# Point (x, y) if in the valid position of the board.
-def is_valid_pose(x,y):
-    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
-
 """
     Function to ponderate movement based on nearby stones and possible wins
     params:
@@ -117,23 +119,27 @@ def is_valid_pose(x,y):
     returns:
         - score: int with combination rating
 """
+from calculation_module import evaluate_board
 def calculate_combination_value(
         board: np.array,
         combination,
         color: int,
         maximum: list = None):
 
-    # define all directions to search
-    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+    # moves = StoneMove(combination)
+    # moves = moves.positions
 
-    # Unify different possible input combination type
-    if isinstance(combination, StoneMove):
-        moves = combination.positions
-    elif isinstance(combination, StonePosition):
-        moves = [combination]
-    else:
-        moves = StoneMove(combination)
-        moves = moves.positions
+    # future_board = np.copy(board)
+    # for move in moves:
+    #     if future_board[move.x][move.y] == NOSTONE:
+    #         future_board[move.x][move.y] = color
+    # return evaluate_board(future_board, color)
+
+    # define all directions to search
+    directions = np.array([(0, 1), (1, 0), (1, 1), (1, -1)])
+
+    moves = StoneMove(combination)
+    moves = moves.positions
     score = 0
     future_board = np.copy(board)
     # Create move in a copy of board
@@ -146,14 +152,14 @@ def calculate_combination_value(
         color = future_board[move.x][move.y]
         # Itereate over all directions
         for direction in directions:
+            last = color
             # Start counting for each color starting if color is same
             black_count = BLACK == color
             white_count = WHITE == color
             # Increment array to check all interesing positions
             add_pos = np.array([-1, 1])
-
             while len(add_pos) > 0:
-                # Get fist element, queue behavior
+                # Get first element, queue behavior
                 pos = add_pos[0]
                 add_pos = np.delete(add_pos, 0)
                 # Calculate current cordinates
@@ -169,6 +175,8 @@ def calculate_combination_value(
                         white_count += 1
                     else:
                         black_count += 1
+                    if last != color:
+                        continue
                     # Check next position in same direction and sign
                     if pos > 0:
                         add_pos = np.append(add_pos, pos + 1)
@@ -185,10 +193,13 @@ def calculate_combination_value(
                     return MAXINT
         # Add rating
         score += white_count + black_count
+    # score = evaluate_board(board,)
     # Update maximum value
     if maximum != None:
         maximum[0] = max(score, maximum[0])
+    # print(score)
     return score
+
 
 """
     Function to check if there is any position that could be forgotten and its importart
@@ -230,7 +241,14 @@ def check_persistant(board: np.array, hot_board: dict, move: StoneMove):
                 for i in adds:
                     if not pos + i in check_list:
                         check_list = np.append(check_list, pos + i)
+            elif board[row][col] == color ^ 3:
+                if pos > 0:
+                    check_list = check_list[check_list < 0]
+                else:
+                    check_list = check_list[check_list > 0]
+
             # Current position is empty and there is 4 stone in a row
             if count >= 4 and board[row][col] == NOSTONE:
                 # Add interesting position
-                hot_board[(row, col)] = [(row, col)]
+                if (row, col) not in hot_board:
+                    hot_board.append((row, col))
