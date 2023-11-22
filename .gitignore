@@ -6,3 +6,4 @@ main.spec
 tia-engine.log
 env/
 venv/
+hot_board.txt

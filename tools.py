@@ -1,80 +1,49 @@
-from defines import *
 import time
+
+
+from defines import *
+from hot_board import update_hot_board, update_remember, calculate_combination_value
+
+
+def init_board():
+    board = np.zeros((GRID_NUM, GRID_NUM), dtype=int)
+    # Set borders to BORDER
+    board[0][:] = board[:][0] = board[-1][:] = board[:][-1] = BORDER
+    
+    # Set inner grid to NOSTONE
+    board[1:-1][1:-1] = NOSTONE
+    return board
 
 # Point (x, y) if in the valid position of the board.
 def is_valid_pose(x,y):
-    return x > 0 and x < GRID_NUM - 1 and y > 0 and y < GRID_NUM - 1
+    return x > 1 and x < GRID_NUM - 2 and y > 1 and y < GRID_NUM - 2
 
 
-def init_board(board):
+def make_move(board, bdata, move, color, store=True, true_make=True):
+    board[move.positions[0].x][move.positions[0].y] = color
+    board[move.positions[1].x][move.positions[1].y] = color
+    if true_make:
+        for m in move.positions:
+            bdata.true_board.append((m.x, m.y))
+    if store:
+        update_remember(bdata, move, True)
+    # update_hot_board(board, bdata)
+
+
+def unmake_move(board, bdata, move):
+    board[move.positions[0].x][move.positions[0].y] = NOSTONE
+    board[move.positions[1].x][move.positions[1].y] = NOSTONE
+    update_remember(bdata, move, False)
+    # update_hot_board(board, bdata)
+
+
+def write_hot_board(hot_board):
+    board = [ [0]*(GRID_NUM) for i in range((GRID_NUM))]
     for i in range(21):
         board[i][0] = board[0][i] = board[i][GRID_NUM - 1] = board[GRID_NUM - 1][i] = BORDER
     for i in range(1, GRID_NUM - 1):
         for j in range(1, GRID_NUM - 1):
             board[i][j] = NOSTONE
-
-
-def make_move(board, hot_board: dict, move, color):
-    board[move.positions[0].x][move.positions[0].y] = color
-    board[move.positions[1].x][move.positions[1].y] = color
-    update_hot_board(hot_board, board, move, make=True)
-
-
-def unmake_move(board, hot_board, move):
-    board[move.positions[0].x][move.positions[0].y] = NOSTONE
-    board[move.positions[1].x][move.positions[1].y] = NOSTONE
-    update_hot_board(hot_board, board, move, make=False)
-
-
-"""
-    make = True if is maken move, False if is unmaken
-"""
-def update_hot_board(hot_board: dict, board, moves: StoneMove, make: bool):
-    for move in moves.positions:
-        # If make action and position is in hot_board, delete it
-        if (move.x, move.y) in hot_board:
-            del hot_board[(move.x, move.y)]
-        # Go through all the neighbors
-        for row in range(move.x - HOT_IMPACT, move.x + HOT_IMPACT + 1):
-            for col in range(move.y - HOT_IMPACT, move.y + HOT_IMPACT + 1):
-                # If current iteration is move, ignore
-                if make and row == move.x and col == move.y:
-                    continue
-                # If current position is outside board limits, ignore
-                if not is_valid_pose(row, col):
-                    continue
-                if board[row][col] != NOSTONE: # If there's already a stone in the main board, ignore
-                    continue
-                target = StonePosition(row, col)
-                impact = StonePosition(move.x, move.y)
-                # Unmake action. Unmaken move should be hot
-                if not make:
-                    target = StonePosition(move.x, move.y)
-                    impact = StonePosition(row, col)
-                    if (row, col) in hot_board:
-                        if (move.x, move.y) in hot_board[(row, col)]:
-                            # my_print(f"DELETED {row}, {col} by {move}", "log.txt")
-                            hot_board[(row, col)].remove((move.x, move.y))
-                        if not hot_board[(row, col)]:
-                            del hot_board[(row, col)]
-                else:
-                    if not (target.x, target.y) in hot_board: # If the hot position is not already created, create hot position
-                        # my_print(f"CREATED {target} by {impact}", "log.txt")
-                        hot_board[(target.x, target.y)] = [(impact.x, impact.y)]
-                        continue
-                    if not (impact.x, impact.y) in hot_board[(target.x, target.y)]:# If it already exists, append actual position to store impact in the same hot position
-                        hot_board[(target.x, target.y)].append((impact.x, impact.y))
-                        # my_print(f"ADD {target} by {impact}", "log.txt")
-
-
-# Calculate hot_board impact for a move
-def calculate_combination_value(board, hot_board, combination):
-    return len(hot_board[combination[0]]) + len(hot_board[combination[1]])
-
-
-def write_hot_board(hot_board):
-    board = [ [0]*(GRID_NUM) for i in range(GRID_NUM)]
-    init_board(board)
     for position in hot_board:
         board[position[1]][GRID_NUM - 1 -position[0]] = 'X'
     with open("hot_board.txt", "w") as file:
@@ -82,14 +51,53 @@ def write_hot_board(hot_board):
             file.write(' '.join(map(str, row)) + '\n')
         for move in hot_board:
             file.write(str(move)+':')
-            for m in hot_board[move]:
-                file.write(' ' + str(m))
+            # for m in hot_board[move]:
+            #     file.write(' ' + str(m))
             file.write("\n")
         file.write("\n")
 
 
+from calculation_module import evaluate_board
+def future_score(board, color, my_color, weights, moves):
+    for move in moves.positions:
+        board[move.x][move.y] = color
+    return evaluate_board(board, my_color, weights)
+
+
+def is_win(board, moves, color):
+    directions = np.array([(0, 1), (1, 0), (1, 1), (1, -1)])
+    for move in moves.positions:
+       for direction in directions:
+           count = 1
+           add_pos = np.array([-1, 1])
+           while len(add_pos) > 0:
+                pos = add_pos[0]
+                add_pos = np.delete(add_pos, 0)
+                # Calculate current cordinates
+                row = move.x + direction[0] * pos
+                col = move.y + direction[1] * pos
+                if not is_valid_pose(row, col):
+                    continue
+                if board[row][col] == color:
+                    count += 1
+                    if pos > 0:
+                        add_pos = np.append(add_pos, pos + 1)
+                    else:
+                        add_pos = np.append(add_pos, pos - 1)
+                
+                if count >= 6:
+                    return True
+    return False
+
+    if calculate_combination_value(board, move.combination(), color, None) == MAXINT:
+        return True
+    return False
+
+
+import numpy as np
 def is_win_by_premove(board, preMove):
-    directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
+
+    directions = np.array([(1, 0), (0, 1), (1, 1), (1, -1)])
 
     for direction in directions:
         for i in range(len(preMove.positions)):
@@ -97,6 +105,8 @@ def is_win_by_premove(board, preMove):
             position = preMove.positions[i]
             n = x = position.x
             m = y = position.y
+            if not is_valid_pose(n, m):
+                continue
             actual_move = board[n][m]
             
             if (actual_move == BORDER or actual_move == NOSTONE):
@@ -106,8 +116,8 @@ def is_win_by_premove(board, preMove):
                 x += direction[0]
                 y += direction[1]
                 count += 1
-            x = n - direction[0]
-            y = m - direction[1]
+            x = n - direction[0] * count
+            y = m - direction[1] * count
             while board[x][y] == actual_move:
                 x -= direction[0]
                 y -= direction[1]
@@ -115,6 +125,13 @@ def is_win_by_premove(board, preMove):
             if count >= 6:
                 return True
     return False
+
+
+def check_full(board):
+    if not np.all(board != 0):
+        return False
+    else:
+        return True
 
 
 def get_msg(max_len):
@@ -223,3 +240,58 @@ def my_print(msg, name):
         ptr = ptr[:-1]
         f.write(f"[{ptr}] - {msg}\n")
     f.close()
+
+"""
+    Function to calculate score for one position
+    Score is evaluated by the number of stones connected for each direction.
+    Score will be MAXINT if same color reach 6 connected or opponenct color reaches 4 (next move could be lost)
+    params:
+        - board: list with current stones layout
+        - move: tuple (x, y) with position to evaluate
+        - color: WHITE or BLACK current player
+"""
+def calculate_single_score(board: np.array, move: tuple, color: int):
+    # All directions to check
+    directions = np.array([(0, 1), (1, 0), (1, 1), (1, -1)])
+    # Dictionary to store scores
+    d = {
+        'total': 0,
+        (0, 1): {WHITE: 0, BLACK: 0},
+        (1, 0): {WHITE: 0, BLACK: 0},
+        (1, 1): {WHITE: 0, BLACK: 0},
+        (1, -1): {WHITE: 0, BLACK: 0}
+    }
+    # Iterate over all directions
+    for direction in directions:
+        direction = tuple(direction)
+        # Increment array to check all interesing positions
+        add_pos = np.array([-1, 1])
+        # Same color starts with count 1, itself
+        d[direction][color] = 1
+        while len(add_pos) > 0:
+            # Get first element, queue behavior
+            pos = add_pos[0]
+            add_pos = np.delete(add_pos, 0)
+            # Calculate current cordinates
+            row = move[0] + direction[0] * pos
+            col = move[1] + direction[1] * pos
+            # Pass outlimits positions
+            if not is_valid_pose(row, col):
+                continue
+            # If there is any stone
+            current_color = board[row][col]
+            if current_color != NOSTONE:
+                # Increase the corresponding counter
+                d[direction][current_color] += 1
+                # Check next position in same direction and sign
+                if pos > 0:
+                    add_pos = np.append(add_pos, pos + 1)
+                else:
+                    add_pos = np.append(add_pos, pos - 1)
+                # Check win or opponent win to increase rating
+                if d[direction][current_color] >= 6 - (0 if current_color == color else 2):
+                    d[direction][current_color] = MAXINT
+        # Add total count
+        d['total'] += d[direction][WHITE] + d[direction][BLACK]
+
+    return d

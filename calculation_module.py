@@ -1,5 +1,5 @@
 from defines import *
-from tools import is_valid_pose, my_print
+# from tools import is_valid_pose, my_print
 
 import random
 import sys
@@ -33,6 +33,53 @@ class CalculationData():
         self.right_spaces = 0
         self.is_last = False
 
+
+class BoardScore():
+    def __init__(self):
+        self.safety = 0
+        self.possible_safety = 0
+        self.threats = 0
+        self.possible_threats = 0
+        self.weights = []
+        self.win = 0
+        self.lose = 0
+        self.same = 0
+        self.opponent = 0
+        self.my_frees = 0
+        self.opponent_frees = 0
+    
+    def set_weights(self, weights):
+        self.weights = weights
+        # self.weights = [50, 15, -100, -10]
+    
+    def ponderate(self, t):
+        if self.win > 0:
+            return MAXINT
+        if self.lose > 0 or self.threats:
+            return MININT
+        score = self.weights[0] * self.safety
+        if t:
+            print(self.weights[0], ":", score, end=' ')
+        score += self.weights[1] * self.possible_safety
+        if t:
+            print(self.weights[1], ":", score, end=' ')
+        score += self.weights[2] * self.threats
+        if t:
+            print(self.weights[2], ":", score, end=' ')
+        score += self.weights[3] * self.possible_threats
+        if t:
+            print(self.weights[3], ":", score, end=' ')
+            print()
+        score += self.weights[4] * self.same
+        score += self.weights[5] * self.opponent
+        score += self.weights[6] * self.my_frees
+        score += self.weights[7] * self.opponent_frees
+        return score
+
+    def __str__(self):
+        return f"Safety: {self.safety} possible_safety: {self.possible_safety} threats: {self.threats} possible_threats: {self.possible_threats}"
+
+
 """
     Function evaluate current board configuration
     params:
@@ -41,11 +88,9 @@ class CalculationData():
     returns:
         - int: difference between safety and threats
 """
-def evaluate_board(board, my_color):
-    # Points for AI
-    safety = 0
-    # Points for oponent
-    threats = 0
+def evaluate_board(board, my_color, moves, genetic_weights = None, t=False):
+    # Evaluation metrics
+    board_score = BoardScore()
 
     # Data structure for each directon searched
     h_data = CalculationData()
@@ -72,9 +117,9 @@ def evaluate_board(board, my_color):
             v_data.color = board[j][i]
 
             # Calculate horizontal (vertical due to i,j configuration)
-            safety, threats = check_actual(h_data, my_color, safety, threats)
+            board_score = check_actual(h_data, my_color, board_score)
             # Calculate vertical (horizontal due to i,j configuration)
-            safety, threats = check_actual(v_data, my_color, safety, threats)
+            board_score = check_actual(v_data, my_color, board_score)
 
             # For diagonal searches
             if j < i:
@@ -95,18 +140,33 @@ def evaluate_board(board, my_color):
                     d1_l_data.color = board[GRID_NUM -  2 - i + j][GRID_NUM - 2 - j]
                     d2_l_data.color = board[GRID_NUM - 2 - i + j][j]
                     # Calculate below principal diagonal for both directions
-                    safety, threats = check_actual(d1_l_data, my_color, safety, threats)
-                    safety, threats = check_actual(d2_l_data, my_color, safety, threats)
+                    board_score = check_actual(d1_l_data, my_color, board_score)
+                    board_score = check_actual(d2_l_data, my_color, board_score)
                 # Calculate above principal diagonal for both directions
-                safety, threats = check_actual(d1_r_data, my_color, safety, threats)
-                safety, threats = check_actual(d2_r_data, my_color, safety, threats)
+                board_score = check_actual(d1_r_data, my_color, board_score)
+                board_score = check_actual(d2_r_data, my_color, board_score)
+
+    for move in moves.positions:
+        window = board[move.x - 1: move.x + 2, move.y - 1: move.y + 2]
+        same_color = (WHITE == my_color)
+        board_score.same += np.count_nonzero(window == (same_color + 1))
+        board_score.opponent += np.count_nonzero(window == ((not same_color) + 1))
+
+    # print(board_score)
+    if genetic_weights:
+        if t:
+            print("DATA: ", board_score.safety, board_score.possible_safety, board_score.threats, board_score.possible_threats, board_score.win, board_score.lose)
+        board_score.set_weights(genetic_weights)
+        score = board_score.ponderate(t)
+    else:
+        score = board_score.safety - board_score.threats
 
     # print(f"Safety: {safety} Threats: {threats}")
     # my_print(f"Safety: {safety} Threats: {threats}", "sco.log")
-    return safety - threats
+    return score
 
 
-def check_actual(data, my_color, safety, threats):
+def check_actual(data, my_color, board_score):
     # Current position is blank
     if data.color == NOSTONE:
         # Add possible spaces count
@@ -117,8 +177,8 @@ def check_actual(data, my_color, safety, threats):
         if data.is_last:
             # Last column so there is not space in "right" side
             data.right_spaces = 0
-            safety, threats = evaluate(data, data.last_color, my_color, safety, threats)
-        return safety, threats
+            board_score = genetic_evaluation(data, data.last_color, my_color, board_score)
+        return board_score
     
     # my_print(f"i: {i} j: {j} data.color: {data.color}", "sco.log")
     # Same color as last seen
@@ -134,7 +194,7 @@ def check_actual(data, my_color, safety, threats):
             # Last column so there is not space in "right" side
             data.right_spaces = 0
             # Evaluate current stone counters
-            safety, threats = evaluate(data, data.color, my_color, safety, threats)
+            board_score = genetic_evaluation(data, data.color, my_color, board_score)
 
     # Current color is different than last seen
     if data.color != data.last_color:
@@ -145,7 +205,7 @@ def check_actual(data, my_color, safety, threats):
             # Set free rigth as true as there is some counter active
             data.free_right = False
             # Evaluate current stone counters
-            safety, threats = evaluate(data, data.last_color, my_color, safety, threats)
+            board_score = genetic_evaluation(data, data.last_color, my_color, board_score)
         # Possible spaces are left spaces for new configuration
         data.left_spaces = data.possible_spaces
         data.possible_spaces = 0
@@ -153,7 +213,7 @@ def check_actual(data, my_color, safety, threats):
         data.last_color = data.color
         data.n = 1
         data.continuous_n = 1
-    return safety, threats
+    return board_score
 
 """
     Function to score n stones in line without oponent stones
@@ -193,7 +253,7 @@ def calculate_spaces_score(n):
         - safety: modified if color == my_color
         - threats: modified if color != my_color
 """
-def evaluate(data, color, my_color, safety, threats):
+def evaluate(data, color, my_color, board_score):
     free_left = data.n + data.left_spaces >= 6
     free_right = data.n + data.right_spaces >= 6
     value = calculate_stone_score(data.n) / calculate_spaces_score(data.spaces)
@@ -205,12 +265,47 @@ def evaluate(data, color, my_color, safety, threats):
     if not free_left and not free_right and data.n + data.spaces < 6:
             score = 0
     if color == my_color:
-        safety += score
+        board_score.safety += score
     else:
-        threats += score
-    return safety, threats
+        board_score.threats += score
+    return board_score
 
                     
-class CalculationModule():
-    def calculate():
-       return random.randint(-sys.maxsize, sys.maxsize)
+def genetic_evaluation(data, color, my_color, board_score):
+    free_left = data.n + data.left_spaces >= 6
+    free_right = data.n + data.right_spaces >= 6
+    score = 0
+    if data.n >= 6 and data.spaces == 0:
+        score = MAXINT
+    elif data.n + data.spaces + data.left_spaces + data.right_spaces < 6:
+            score = 0
+    elif data.n >= 4:
+        if data.spaces <= 2:
+            score = 2
+        elif data.spaces <= 4:
+            score = 1
+    elif data.n >= 2:
+        if data.spaces <= 2:
+            score = 1
+    
+    if color == my_color:
+        if score > 0:
+            board_score.my_frees += (free_left + free_right)
+        if score == 1:
+            board_score.possible_safety += 1
+        if score == 2:
+            board_score.safety += 1
+        if score == MAXINT:
+            # print("WIN")
+            board_score.win += 1
+    else:
+        if score > 0:
+            board_score.opponent_frees += (free_left + free_right)
+        if score == 1:
+            board_score.possible_threats += 1
+        if score == 2:
+            board_score.threats += 1
+        if score == MAXINT:
+            # print("LOSE")
+            board_score.lose += 1
+    return board_score
