@@ -1,9 +1,10 @@
 from defines import *
 import random
 from queue import Queue
+import csv
 
 class Genetic():
-    def __init__(self, population_number, epochs):
+    def __init__(self, population_number, epochs, file=None):
         self.population_number = population_number
         self.epochs = epochs
         self.mutation_porb = 0.1
@@ -19,14 +20,23 @@ class Genetic():
         }
         self.population = []
         self.evaluations = []
-        self.init_population()
+        self.init_population(file)
     
-    def init_population(self):
-        for i in range(self.population_number):
-            chromosome = []
-            for param in self.param_range:
-                chromosome.append(random.uniform(self.param_range[param][0], self.param_range[param][1]))
-            self.population.append(chromosome)
+    def init_population(self, file):
+        if file != None:
+            with open(file, mode='r') as file:
+                reader = csv.reader(file)
+                # Skip the header row
+                header = next(reader)
+                for row in reader:
+                    chromosome = [float(v) for v in row[:-1]]
+                    self.population.append(chromosome)
+        else:
+            for i in range(self.population_number):
+                chromosome = []
+                for param in self.param_range:
+                    chromosome.append(random.uniform(self.param_range[param][0], self.param_range[param][1]))
+                self.population.append(chromosome)
 
     def set_evaluations(self, evaluations):
         self.evaluations = evaluations
@@ -100,6 +110,14 @@ class Genetic():
     #         i += 1
     
     def save_weights(self):
-        with open("genetic.txt", "w") as f:
+        with open("genetic.csv", mode='w', newline='') as f:
+            writer = csv.writer(f)
+            
+            # Write the header
+            writer.writerow(["safety", "possible_safety", "threats", "possible_threats", "same_stones", "opponent_stones", "my_frees", "opponent_frees", "score"])
+            
+            # Write data rows
+            self.evaluations = [0 for p in self.population]
             for chromosome, score in zip(self.population, self.evaluations):
-                f.write(f"{chromosome} SCORE: {score}\n")
+                # Convert the chromosome list to a comma-separated string
+                writer.writerow([*chromosome, score])

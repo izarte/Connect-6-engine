@@ -10,7 +10,7 @@ import numpy as np
     Returns:
         None
 """
-def update_hot_board(board: np.array, bdata: BData):
+def update_hot_board(board: np.array, bdata: BData, continue_recursivity = True):
     # Reset dictionary
     hot_board = []
     # Iterate over all remembered movements
@@ -42,13 +42,24 @@ def update_hot_board(board: np.array, bdata: BData):
                         if (row, col) in hot_board:
                             hot_board.remove((row, col))
                         continue
-                    # Create position 
+                    # Create position
                     if not (row, col) in hot_board:
                         hot_board.append((row, col))
     # For each move in true board
     for move in bdata.true_board:
         # Check if there is any crucial move to not forget it
         check_persistant(board, hot_board, StonePosition(move[0], move[1]))
+
+    import copy
+    if continue_recursivity and len(hot_board) < 2:
+        i = 0
+        new_data = copy.deepcopy(bdata)
+        new_data.true_board.reverse()
+        while len(hot_board) < 2:
+            new_data.remembered_moves['queue'] = [StoneMove(((new_data.true_board[i][0], new_data.true_board[i][1]), (new_data.true_board[i + 1][0], new_data.true_board[i + 1][1])))]
+            i += 2
+            update_hot_board(board, new_data, False)
+            hot_board = new_data.hot_board
 
     bdata.hot_board = np.array(hot_board)
 
