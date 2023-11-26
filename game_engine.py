@@ -23,7 +23,16 @@ class GameEngine:
         self.bdata = BData()
         self.m_search_engine = SearchEngine()
         self.m_best_move = StoneMove()
-        self.weights = [50, 1, -100, -1]
+        self.weights = [
+            0.655491937385767,
+            1.663817624491245,
+            -17.131072791275393,
+            -3.4534886269050267,
+            4.332034275466868,
+            0.05354897859954244,
+            0.03224872240158638,
+            -0.19928640946636267
+        ]
 
     def init_game(self):
         self.board = init_board()
@@ -46,6 +55,7 @@ class GameEngine:
             " unvcf       - set none vcf search.\n"
             " help        - print this help.\n"
             " genetic     - start genetic competition.\n"
+            " metrics     - get times and nodes for 10 moves for each players"
         )
 
     def run(self):
@@ -81,7 +91,7 @@ class GameEngine:
                 self.m_chess_type = self.m_chess_type ^ 3
                 self.m_best_move = self.search_a_move(self.m_chess_type, self.m_best_move)
                 make_move(self.board, self.bdata, self.m_best_move, self.m_chess_type)
-                score = evaluate_board(board=self.board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
+                score = evaluate_board(board=self.board, my_color=self.m_chess_type, genetic_weights=self.weights, moves=self.m_best_move)
                 print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")
                 msg = f"move {move2msg(self.m_best_move)}"
                 print(msg)
@@ -126,7 +136,7 @@ class GameEngine:
             elif msg == "genetic":
                 POPULATION = 32
                 EPOCHS = 30
-                genetic = Genetic(POPULATION, 5)
+                genetic = Genetic(POPULATION, 5, "genetic1.csv")
                 iterations = int(math.log2(POPULATION))  
                 print(f"Iterations: {iterations} for {len(genetic.population)} chromosomes")    
                 
@@ -140,8 +150,8 @@ class GameEngine:
                         tournament.play_matches(self.search_a_move)
                         # print(tournament.scores)
                     genetic.set_evaluations(tournament.scores)
-                    genetic.reproduction()
                     genetic.save_weights()
+                    genetic.reproduction()
                 # print(genetic.population, genetic.evaluations)
                 best_weights = []
                 p = 0
@@ -171,10 +181,10 @@ class GameEngine:
         if not weights:
             weights = self.weights
         bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove, weights)
+        # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove, weights)
         # print(f"move {move2msg(bestMove)}")
         # make_move(self.board, self.bdata, self.m_best_move, self.m_chess_type)
         # score = evaluate_board(board=self.board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
-        # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove, weights)
         end = time.perf_counter()
         # print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")
         # my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
@@ -182,7 +192,7 @@ class GameEngine:
         # print(f"Node:\t{self.m_search_engine.total_nodes}\n")
         # print(f"Score:\t{score:.3f}")
         if return_metrics:
-            return bestMove, end-start, self.m_search_engine.total_nodes
+            return bestMove, end-start, self.m_search_engine.total_nodes, score
         return bestMove
 
 

@@ -117,7 +117,6 @@ class Genetic():
             writer.writerow(["safety", "possible_safety", "threats", "possible_threats", "same_stones", "opponent_stones", "my_frees", "opponent_frees", "score"])
             
             # Write data rows
-            self.evaluations = [0 for p in self.population]
             for chromosome, score in zip(self.population, self.evaluations):
                 # Convert the chromosome list to a comma-separated string
                 writer.writerow([*chromosome, score])
