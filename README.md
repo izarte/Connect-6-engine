@@ -45,5 +45,5 @@ The command list is as follows:
         new white   - start a new game and set it to White.
         depth d     - set the alpha-beta search depth, default is 6.
         help        - print this 
-        " genetic     - start the genetic competition.\n"
-        " metrics     - get times and nodes for 10 moves for each player"
+        genetic     - start the genetic competition.
+        metrics     - get times and nodes for 10 moves for each player
