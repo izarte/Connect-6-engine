@@ -1,9 +1,8 @@
 import random
-import copy
 import time
 
 from defines import *
-from tools import init_board, is_win_by_premove, make_move, check_full, print_board, write_hot_board, is_win
+from tools import init_board, make_move, check_full, is_win
 
 class Tournament():
     def __init__(self, participants):
@@ -31,8 +30,6 @@ class Tournament():
 
     def play_matches(self, search_function):
         for match in self.matches:
-            # self.participants[match[WHITE]] = [4.058983753320458, 9.90288746348569, -16.395281180459822, -8.634440141626275, 3.9118129830634425, 4.243440863174903, 1.4825781327974814, -1.609384849815043]
-            # self.participants[match[BLACK]] = [4.347587854194691, 6.435075110302635, -16.341940095918247, -5.004689246946475, 4.393958788772255, 0.001448112263596757, 0.4040823845773083, -1.2688681902370818]
             t = time.perf_counter()
             board = init_board()
             bdata = {
@@ -57,13 +54,7 @@ class Tournament():
                 move = search_function(color, move, self.participants[match[color]], tournament_data=tournament_data[color])
                 make_move(board, bdata[color], move, color)
                 make_move(board, bdata[color ^ 3], move, color)
-                # if color == WHITE:
-                #     print(f"WHITE {time.perf_counter() - t}")
-                # else:
-                #     print(f"BLACK {time.perf_counter() - t}")
-                # print_board(board)
-                # print(bdata[color].hot_board)
-                # write_hot_board(bdata[color].hot_board)
+
             winner = color
             self.scores[match[winner]] += 1
             if winner == WHITE:

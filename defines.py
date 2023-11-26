@@ -8,8 +8,8 @@ BORDER = 3                  # Border flag in the board.
 NOSTONE = 0                 # Empty flag.
 MSG_LENGTH = 512            # Tamaño del mensaje
 GRID_COUNT = 361            # Sum of the points in the board.
-LOG_FILE = "tia-engine.log"
-ENGINE_NAME = "TIA.Connect6"
+LOG_FILE = "izrcrm.log"
+ENGINE_NAME = "izrcrm"
 # Max values in the evaluation.
 MAXINT = 20000
 MININT = -20000

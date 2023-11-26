@@ -29,6 +29,8 @@ def get_metrics(search_function):
         move, t, nodes, score = search_function(color, move, weights, tournament_data=tournament_data[color], return_metrics=True)
         if score > 200:
             score = 200
+        if score < -200:
+            score = -200
         if i != 0:
             data.append([t, nodes, score])
         make_move(board, bdata[color], move, color)

@@ -161,8 +161,6 @@ def evaluate_board(board, my_color, moves, genetic_weights = None, t=False):
     else:
         score = board_score.safety - board_score.threats
 
-    # print(f"Safety: {safety} Threats: {threats}")
-    # my_print(f"Safety: {safety} Threats: {threats}", "sco.log")
     return score
 
 
@@ -179,8 +177,7 @@ def check_actual(data, my_color, board_score):
             data.right_spaces = 0
             board_score = genetic_evaluation(data, data.last_color, my_color, board_score)
         return board_score
-    
-    # my_print(f"i: {i} j: {j} data.color: {data.color}", "sco.log")
+
     # Same color as last seen
     if data.last_color == data.color:
         # Add counters
@@ -260,8 +257,6 @@ def evaluate(data, color, my_color, board_score):
     score = value * (1 + free_left + free_right)
     if data.n >= 6 and data.spaces == 0:
         score = MAXINT
-    # if score != 0:
-    #     print(f"n: {data.n} spaces: {data.spaces} left: {data.left_spaces} right: {data.right_spaces}")
     if not free_left and not free_right and data.n + data.spaces < 6:
             score = 0
     if color == my_color:
@@ -296,7 +291,6 @@ def genetic_evaluation(data, color, my_color, board_score):
         if score == 2:
             board_score.safety += 1
         if score == MAXINT:
-            # print("WIN")
             board_score.win += 1
     else:
         if score > 0:
@@ -306,6 +300,5 @@ def genetic_evaluation(data, color, my_color, board_score):
         if score == 2:
             board_score.threats += 1
         if score == MAXINT:
-            # print("LOSE")
             board_score.lose += 1
     return board_score

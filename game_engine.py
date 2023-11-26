@@ -181,13 +181,8 @@ class GameEngine:
         if not weights:
             weights = self.weights
         bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.alpha_beta_search(ourColor, bestMove, weights)
-        # bestMove, score, self.m_search_engine.total_nodes = self.m_search_engine.negascout_search(ourColor, bestMove, weights)
-        # print(f"move {move2msg(bestMove)}")
-        # make_move(self.board, self.bdata, self.m_best_move, self.m_chess_type)
-        # score = evaluate_board(board=self.board, my_color=self.m_chess_type, genetic_weights=self.weights, t=True)
         end = time.perf_counter()
         # print(f"NODES: {self.m_search_engine.total_nodes} SCORE: {score}")
-        # my_print(f"Time: {end - start:.3f}\tNodes: {self.m_search_engine.total_nodes}\tScore: {score:.3f}", "TreeData.txt")
         # print(f"AB Time:\t{end - start:.3f}")
         # print(f"Node:\t{self.m_search_engine.total_nodes}\n")
         # print(f"Score:\t{score:.3f}")

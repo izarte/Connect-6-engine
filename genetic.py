@@ -41,7 +41,6 @@ class Genetic():
     def set_evaluations(self, evaluations):
         self.evaluations = evaluations
 
-
     def reproduction(self):
         print("PARENTS: ", self.population)
         print("===================================")
@@ -65,8 +64,6 @@ class Genetic():
                 else parents[i + 1]['chromosome'][chromosome_len - 1 - index]
                 for index in range(chromosome_len - 1, -1, -1)
             ]
-            # child_1 = parents[i]['chromosome'][indexes[:cross_point]] + parents[i + 1]['chromosome'][indexes[cross_point:]]
-            # child_2 = parents[i]['chromosome'][indexes[:(chromosome_len-cross_point)]] + parents[i + 1]['chromosome'][indexes[(chromosome_len-cross_point):]]
             for child in [child_1, child_2]:
                 if random.random() < self.mutation_porb:
                     allele = random.choice([0, 1, 2, 3])
@@ -80,34 +77,6 @@ class Genetic():
                     self.population[i] = chromosome
                 i += 1
         print(self.population)
-
-    # def reproduction(self):
-    #     parents = []
-    #     for chromosome, score in zip(self.population, self.evaluations):
-    #         if score > 0:
-    #             parents.append({'chromosome': chromosome, 'score': score})
-    #     children = Queue()
-    #     for i in range(0, len(parents), 2):
-    #         if parents[i]['score'] == parents[i + 1]['score']:
-    #             cross_point = 2
-    #         elif parents[i]['score'] > parents[i + 1]['score']:
-    #             cross_point = 3
-    #         else:
-    #             cross_point = 1
-    #         child_1 = parents[i]['chromosome'][:cross_point] + parents[i + 1]['chromosome'][cross_point:]
-    #         child_2 = parents[i]['chromosome'][:(4-cross_point)] + parents[i + 1]['chromosome'][(4-cross_point):]
-    #         for child in [child_1, child_2]:
-    #             if random.random() < self.mutation_porb:
-    #                 allele = random.choice([0, 1, 2, 3])
-    #                 child[allele] += random.uniform(-5, 5)
-    #         children.put(child_1)
-    #         children.put(child_2)
-    #     i = 0
-    #     while not children.empty():
-    #         if self.evaluations[i] == 0:
-    #             chromosome = children.get()
-    #             self.population[i] = chromosome
-    #         i += 1
     
     def save_weights(self):
         with open("genetic.csv", mode='w', newline='') as f:

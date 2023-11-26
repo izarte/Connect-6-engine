@@ -1,8 +1,9 @@
 import time
+import numpy as np
 
 
 from defines import *
-from hot_board import update_hot_board, update_remember, calculate_combination_value
+from hot_board import update_remember
 
 
 def init_board():
@@ -89,12 +90,7 @@ def is_win(board, moves, color):
                     return True
     return False
 
-    if calculate_combination_value(board, move.combination(), color, None) == MAXINT:
-        return True
-    return False
 
-
-import numpy as np
 def is_win_by_premove(board, preMove):
 
     directions = np.array([(1, 0), (0, 1), (1, 1), (1, -1)])

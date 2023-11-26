@@ -43,25 +43,17 @@ class TreeNode:
             sorted_combinations = [] # Don't execute loop 
         else:
             update_hot_board(self.board, self.bdata)
-            # t = time.perf_counter()
             score_chess = {tuple(chess): calculate_single_score(self.board, chess, self.color) for chess in self.bdata.hot_board}
             possible_combinations = list(itertools.combinations(self.bdata.hot_board, 2))
             maximum = [0]
-            # t1 = time.perf_counter()
             sorted_combinations = sorted(
                 possible_combinations,
                 key=lambda combination: calculate_combination_value(self.board, combination, self.color, score_chess, maximum),
                 reverse=True)
-            # t2 = time.perf_counter()
             sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color, score_chess) > maximum[0] // 2, sorted_combinations))
-            sorted_combinations = sorted_combinations[:20]
-            # print(f"COMBINATION: {t1 - t} SORTING: {t2 - t1} FILTER {time.perf_counter() - t2}")
-
-            # print(len(sorted_combinations))
+            sorted_combinations = sorted_combinations[:70]
 
         for combination in sorted_combinations:
-            # if self.level == 0:
-            #     print(f"A: {self.alpha_beta.alpha}, B: {self.alpha_beta.beta}")
             if self.alpha_beta:
                 break
             self.total_nodes += 1
@@ -111,15 +103,10 @@ class TreeNode:
                         break
                     continue
                 self.alpha_beta.beta = score
-            # if score == abs(MAXINT):
-            #     break
             
         best_option = self.get_selection()
         # Return the best move if it is first node
         if self.level == 0:
-            # print(sorted_combinations)
-            # for move in self.possible_moves:
-            #     print(move, self.possible_moves[move])
             return self.possible_moves[best_option], best_option, self.total_nodes
         # Update parent alpha beta values
         if self.slelection_method_is_max:
@@ -146,34 +133,25 @@ class TreeNode:
 
     def negaScout(self):
         if self.is_leaf:
-            # t = time.perf_counter()
             v = evaluate_board(self.board, self.my_color, self.created_move, self.weights)
-            # my_print(f"EVALUTAION {time.perf_counter() - t}", "puta.txt")
             return v, self.total_nodes
 
         update_hot_board(self.board, self.bdata)
-        # t = time.perf_counter()
         score_chess = {tuple(chess): calculate_single_score(self.board, chess, self.color) for chess in self.bdata.hot_board}
         possible_combinations = list(itertools.combinations(self.bdata.hot_board, 2))
         maximum = [0]
-        # t1 = time.perf_counter()
         sorted_combinations = sorted(
             possible_combinations,
             key=lambda combination: calculate_combination_value(self.board, combination, self.color, score_chess, maximum),
             reverse=True)
-        # t2 = time.perf_counter()
+
         sorted_combinations  = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, x, self.color, score_chess) > maximum[0] // 2, sorted_combinations))
         sorted_combinations = sorted_combinations[:20]
-        # my_print(f"COMBINATION {time.perf_counter() - t}", "puta.txt")
-        # print(len(sorted_combinations))
-        # sorted_combinations = list(itertools.takewhile(lambda x: calculate_combination_value(self.board, self.hot_board, x, self.color, 0) > maximum // 2, sorted_combinations))
-        # print(len(sorted_combinations))
-        # sorted_combinations = sorted_combinations[:100]
+
         a = self.alpha_beta.alpha
         b = self.alpha_beta.beta
         best_move = StoneMove()
         for i, combination in enumerate(sorted_combinations):
-            # my_print(f"{self.level} {combination}", "puta.txt")
             self.total_nodes += 1
             move = StoneMove(combination)
             make_move(self.board, self.bdata, move, self.color, self.level != DEPTH - 1, False)
