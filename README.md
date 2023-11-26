@@ -23,7 +23,7 @@ Compile Notes
 
 To generate a compatible executable with the game interface, execute:
 ```bash
-    python -m PyInstaller main.py
+    python3 -m PyInstaller main.py
 ```
 The executable will be generated in dist/main/main
 
